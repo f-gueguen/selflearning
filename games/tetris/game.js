@@ -227,6 +227,7 @@ const Game = (config = {}) => {
     //return the rows cleared
     return rowsCleared;
   };
+
   /**
    * Applies the current shape to the _grid.
    */

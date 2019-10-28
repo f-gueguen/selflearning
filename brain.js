@@ -26,6 +26,8 @@ let movesTaken = 0;
 let moveLimit = 500;
 //consists of move the 7 move parameters
 let moveAlgorithm = {};
+// percentratioage of fittest genomes to survive the generation
+let ratioFittestToSurvive = 0.2;
 
 //GENETIC ALGORITHM VALUES
 //stores number of genomes, init at 50 
@@ -197,31 +199,27 @@ function evolve() {
   //gets the current game state
   roundState = getState();
   //sorts genomes in decreasing order of fitness values
-  genomes.sort(function (a, b) {
-    return b.fitness - a.fitness;
-  });
+  genomes.sort((a, b) => (b.fitness - a.fitness));
   //add a copy of the fittest genome to the elites list
   archive.elites.push(clone(genomes[0]));
   console.log("Elite's fitness: " + genomes[0].fitness);
+
+  //get a random index from genome array
+  const getRandomGenome = () =>
+    genomes[randomWeightedNumBetween(0, genomes.length - 1)];
 
   //remove the tail end of genomes, focus on the fittest
   while (genomes.length > populationSize / 2) {
     genomes.pop();
   }
-  //sum of the fitness for each genome
-  let totalFitness = 0;
-  for (let i = 0; i < genomes.length; i++) {
-    totalFitness += genomes[i].fitness;
-  }
 
-  //get a random index from genome array
-  function getRandomGenome() {
-    return genomes[randomWeightedNumBetween(0, genomes.length - 1)];
-  }
   //create children array
   let children = [];
-  //add the fittest genome to array
-  children.push(clone(genomes[0]));
+  //add the x% fittest genome to array
+  for (let i = 0; i < genomes.length * ratioFittestToSurvive; i++) {
+    children.push(clone(genomes[i]));
+  }
+
   //add population sized amount of children
   while (children.length < populationSize) {
     //crossover between two random genomes to make a child
@@ -260,27 +258,26 @@ function makeChild(mum, dad) {
     roughness: randomChoice(mum.roughness, dad.roughness),
     //no fitness. yet.
     fitness: -1
-  };
-  //mutation time!
+  }
 
   //we mutate each parameter using our mutationstep
   if (Math.random() < mutationRate) {
-    child.rowsCleared = child.rowsCleared + Math.random() * mutationStep * 2 - mutationStep;
+    child.rowsCleared = child.rowsCleared + mutationStep * (Math.random() * 2 - 1);
   }
   if (Math.random() < mutationRate) {
-    child.weightedHeight = child.weightedHeight + Math.random() * mutationStep * 2 - mutationStep;
+    child.weightedHeight = child.weightedHeight + mutationStep * (Math.random() * 2 - 1);
   }
   if (Math.random() < mutationRate) {
-    child.cumulativeHeight = child.cumulativeHeight + Math.random() * mutationStep * 2 - mutationStep;
+    child.cumulativeHeight = child.cumulativeHeight + mutationStep * (Math.random() * 2 - 1);
   }
   if (Math.random() < mutationRate) {
-    child.relativeHeight = child.relativeHeight + Math.random() * mutationStep * 2 - mutationStep;
+    child.relativeHeight = child.relativeHeight + mutationStep * (Math.random() * 2 - 1);
   }
   if (Math.random() < mutationRate) {
-    child.holes = child.holes + Math.random() * mutationStep * 2 - mutationStep;
+    child.holes = child.holes + mutationStep * (Math.random() * 2 - 1);
   }
   if (Math.random() < mutationRate) {
-    child.roughness = child.roughness + Math.random() * mutationStep * 2 - mutationStep;
+    child.roughness = child.roughness + mutationStep * (Math.random() * 2 - 1);
   }
   return child;
 }
@@ -366,7 +363,6 @@ function getAllPossibleMoves() {
 function getHighestRatedMove(moves) {
   //start these values off small
   let maxRating = -10000000000000;
-  //    let maxMove = -1;
   let ties = [];
   //iterate through the list of moves
   for (let index = 0; index < moves.length; index++) {
@@ -374,7 +370,6 @@ function getHighestRatedMove(moves) {
     if (moves[index].rating > maxRating) {
       //update our max values to include this moves values
       maxRating = moves[index].rating;
-      //            maxMove = index;
       //store index of this move
       ties = [index];
     } else if (moves[index].rating === maxRating) {
@@ -396,14 +391,15 @@ function getHighestRatedMove(moves) {
 function makeNextMove() {
   //increment number of moves taken
   movesTaken++;
-  //if its over the limit of moves
+
+  //update this genome's fitness value using the game score
+  genomes[currentGenome].fitness = game.score();
+
   if (movesTaken > moveLimit) {
-    //update this genomes fitness value using the game score
-    genomes[currentGenome].fitness = clone(game.score());
-    //and evaluates the next genome
+    // if its over the limit of moves, evaluates the next genome
     evaluateNextGenome();
   } else {
-    //time to make a move
+    // make the next move
 
     //get all the possible moves
     let possibleMoves = getAllPossibleMoves();
@@ -454,8 +450,6 @@ function update() {
     if (!results.moved) {
       //if we lost
       if (results.lose) {
-        //update the fitness
-        genomes[currentGenome].fitness = clone(game.score());
         //move on to the next genome
         evaluateNextGenome();
       } else {
@@ -488,9 +482,9 @@ function getState() {
     currentShape: clone(game.currentShape()),
     upcomingShape: clone(game.upcomingShape() || 0),
     bag: clone(game.bag()),
-    bagIndex: clone(game.bagIndex()),
-    rndSeed: clone(rndSeed),
-    score: clone(game.score())
+    bagIndex: game.bagIndex(),
+    rndSeed,
+    score: game.score()
   };
 }
 
