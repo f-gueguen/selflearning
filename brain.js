@@ -1,6 +1,7 @@
 "use strict";
 
 let game = Tetris();
+let evaluator = Evaluator(game);
 
 //Block colors
 let colors = ["F92338", "C973FF", "1C76BC", "FEE356", "53D504", "36E0FF", "F8931D"];
@@ -305,28 +306,27 @@ function makeChild(mum, dad) {
 function getAllPossibleMoves() {
   let lastState = getState();
   let possibleMoves = [];
-  //    let possibleMoveRatings = [];
-  let iterations = 0;
+
   //for each possible rotation
-  for (let rots = 0; rots < 4; rots++) {
+  for (let rotations = 0; rotations < 4; rotations++) {
 
     let oldX = [];
+    const transitionLimit = Math.ceil(game.gameWidth / 2);
     //for each iteration
-    for (let t = -5; t <= 5; t++) {
-      iterations++;
+    for (let translation = -transitionLimit; translation <= game.gameWidth - transitionLimit; translation++) {
       loadState(lastState);
       //rotate shape
-      for (let j = 0; j < rots; j++) {
+      for (let j = 0; j < rotations; j++) {
         game.rotateShape();
       }
       //move left
-      if (t < 0) {
-        for (let l = 0; l < Math.abs(t); l++) {
+      if (translation < 0) {
+        for (let l = 0; l < Math.abs(translation); l++) {
           game.moveLeft();
         }
         //move right
-      } else if (t > 0) {
-        for (let r = 0; r < t; r++) {
+      } else if (translation > 0) {
+        for (let r = 0; r < translation; r++) {
           game.moveRight();
         }
       }
@@ -341,11 +341,11 @@ function getAllPossibleMoves() {
         //set the 7 parameters of a genome
         let algorithm = {
           rowsCleared: moveDownResults.rowsCleared,
-          weightedHeight: Math.pow(game.getHeight(), 1.5),
-          cumulativeHeight: game.getCumulativeHeight(),
-          relativeHeight: game.getRelativeHeight(),
-          holes: game.getHoles(),
-          roughness: game.getRoughness()
+          weightedHeight: Math.pow(evaluator.getHeight(game), 1.5),
+          cumulativeHeight: evaluator.getCumulativeHeight(game),
+          relativeHeight: evaluator.getRelativeHeight(game),
+          holes: evaluator.getHoles(game),
+          roughness: evaluator.getRoughness(game)
         };
         //rate each move
         let rating = 0;
@@ -360,7 +360,7 @@ function getAllPossibleMoves() {
           rating -= 500;
         }
         //push all possible moves, with their associated ratings and parameter values to an array
-        possibleMoves.push({ rotations: rots, translation: t, rating: rating, algorithm: algorithm });
+        possibleMoves.push({ rotations, translation, rating, algorithm });
         //update the position of old X value
         oldX.push(currentShape.x);
       }
@@ -428,8 +428,6 @@ function makeNextMove() {
     let possibleMoves = getAllPossibleMoves();
     //lets store the current state since we will update it
     let lastState = getState();
-
-
 
 
     //whats the next shape to play

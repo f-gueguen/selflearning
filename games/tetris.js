@@ -312,140 +312,6 @@ const Tetris = (config = {}) => {
   };
 
   /**
-   * Returns the cumulative height of all the columns.
-   * @return {Number} The cumulative height.
-   */
-  const getCumulativeHeight = () => {
-    removeShape();
-    const peaks = new Array(gameWidth).fill(gameHeight);
-    for (let row = 0; row < _grid.length; row++) {
-      for (let col = 0; col < _grid[row].length; col++) {
-        if (_grid[row][col] !== 0 && peaks[col] === gameHeight) {
-          peaks[col] = row;
-        }
-      }
-    }
-    let totalHeight = 0;
-    for (let i = 0; i < peaks.length; i++) {
-      totalHeight += gameHeight - peaks[i];
-    }
-    applyShape();
-    return totalHeight;
-  };
-
-  /**
-   * Returns the number of holes in the _grid.
-   * @return {Number} The number of holes.
-   */
-  let getHoles = () => {
-    removeShape();
-    const peaks = new Array(gameWidth).fill(gameHeight);
-    for (let row = 0; row < _grid.length; row++) {
-      for (let col = 0; col < _grid[row].length; col++) {
-        if (_grid[row][col] !== 0 && peaks[col] === gameHeight) {
-          peaks[col] = row;
-        }
-      }
-    }
-    let holes = 0;
-    for (let x = 0; x < peaks.length; x++) {
-      for (let y = peaks[x]; y < _grid.length; y++) {
-        if (_grid[y][x] === 0) {
-          holes++;
-        }
-      }
-    }
-    applyShape();
-    return holes;
-  };
-
-  /**
-   * Returns an array that replaces all the holes in the _grid with -1.
-   * @return {Array} The modified _grid array.
-   */
-  const getHolesArray = () => {
-    const array = clone(_grid);
-    removeShape();
-    const peaks = new Array(gameWidth).fill(gameHeight);
-    for (let row = 0; row < _grid.length; row++) {
-      for (let col = 0; col < _grid[row].length; col++) {
-        if (_grid[row][col] !== 0 && peaks[col] === gameHeight) {
-          peaks[col] = row;
-        }
-      }
-    }
-    for (let x = 0; x < peaks.length; x++) {
-      for (let y = peaks[x]; y < _grid.length; y++) {
-        if (_grid[y][x] === 0) {
-          array[y][x] = -1;
-        }
-      }
-    }
-    applyShape();
-    return array;
-  };
-
-  /**
-   * Returns the roughness of the _grid.
-   * @return {Number} The roughness of the _grid.
-   */
-  const getRoughness = () => {
-    removeShape();
-    let peaks = new Array(gameWidth).fill(gameHeight);
-    for (let row = 0; row < _grid.length; row++) {
-      for (let col = 0; col < _grid[row].length; col++) {
-        if (_grid[row][col] !== 0 && peaks[col] === gameHeight) {
-          peaks[col] = row;
-        }
-      }
-    }
-    let roughness = 0;
-    let differences = [];
-    for (let i = 0; i < peaks.length - 1; i++) {
-      roughness += Math.abs(peaks[i] - peaks[i + 1]);
-      differences[i] = Math.abs(peaks[i] - peaks[i + 1]);
-    }
-    applyShape();
-    return roughness;
-  };
-
-  /**
-   * Returns the range of heights of the columns on the _grid.
-   * @return {Number} The relative height.
-   */
-  const getRelativeHeight = () => {
-    removeShape();
-    const peaks = new Array(gameWidth).fill(gameHeight);
-    for (let row = 0; row < _grid.length; row++) {
-      for (let col = 0; col < _grid[row].length; col++) {
-        if (_grid[row][col] !== 0 && peaks[col] === gameHeight) {
-          peaks[col] = row;
-        }
-      }
-    }
-    applyShape();
-    return Math.max.apply(Math, peaks) - Math.min.apply(Math, peaks);
-  };
-
-  /**
-   * Returns the height of the biggest column on the _grid.
-   * @return {Number} The absolute height.
-   */
-  const getHeight = () => {
-    removeShape();
-    const peaks = new Array(gameWidth).fill(gameHeight);
-    for (let row = 0; row < _grid.length; row++) {
-      for (let col = 0; col < _grid[row].length; col++) {
-        if (_grid[row][col] !== 0 && peaks[col] === gameHeight) {
-          peaks[col] = row;
-        }
-      }
-    }
-    applyShape();
-    return gameHeight - Math.min.apply(Math, peaks);
-  };
-
-  /**
    * Determines if the given _grid and shape collide with one another.
    * @param  {Grid} scene  The _grid to check.
    * @param  {Shape} object The shape to check.
@@ -527,6 +393,8 @@ const Tetris = (config = {}) => {
 
   // public
   return {
+    gameHeight,
+    gameWidth,
     score,
     grid,
     currentShape,
@@ -541,15 +409,9 @@ const Tetris = (config = {}) => {
     rotateShape: rotateShape.bind(this),
     //clearRows: clearRows,
     applyShape: applyShape.bind(this),
-    //removeShape: removeShape,
+    removeShape: removeShape.bind(this),
     nextShape: nextShape.bind(this),
     //generateBag: generateBag,
-    getCumulativeHeight: getCumulativeHeight.bind(this),
-    getHoles: getHoles.bind(this),
-    getHolesArray: getHolesArray.bind(this),
-    getRoughness: getRoughness.bind(this),
-    getRelativeHeight: getRelativeHeight.bind(this),
-    getHeight: getHeight.bind(this),
     // interface
     nextMove: nextMove.bind(this),
     initialize: initialize.bind(this)
