@@ -1,118 +1,108 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Gamer</title>
-        <link href="https://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet" type="text/css">
-        <style>
-            .char_0 {
-                color: #000;
-            }
-            i {
-                font-style: normal;
-            }
-            .char_1 {
-                color: #F92338;
-            }
-            .char_2 {
-                color: #C973FF;
-            }
-            .char_3 {
-                color: #1C76BC;
-            }
-            .char_4 {
-                color: #FEE356;
-            }
-            .char_5 {
-                color: #53D504;
-            }
-            .char_6 {
-                color: #36E0FF;
-            }
-            .char_7 {
-                color: #F8931D;
-            }
-            body {
-                /*background-color: #272821;*/
-            }
-            .text {
-                color: #706C5A;
-                font-family: Inconsolata, Courier, monospace;
-                font-size: 20px;
-            }
-            /*            #output {
-                            float: left;
-                            padding-left: 20%;
-                        }
-                        #score {
-                            padding-top: 5em;
-                            padding-left: 55%;
-                        }*/
-            #instructions {
-                /*float: left;*/
-                /*position: absolute;*/
-                /*left: 1.5%;*/
-                /*bottom: 3%;*/
-                font-size: small;
-                line-height: 110%;
-            }
-            a:link {
-                color: inherit;
-            }
-            pre {
-                font-size: .6em;
-            }
-            .flex-container {
-                display: flex;
-                flex-direction: row;
-                flex-wrap: wrap-reverse;
-                justify-content: center;
-                align-content: space-between;
-                align-items: center;
-            }
-            .flex-item {
-                order: 0;
-                flex: 0 1 auto;
-                align-self: auto;
-                padding: 0 2em 0 2em;
-            }
-        </style>
-        <script src="lib/jquery-3.3.1.js"></script>
-        <script src="random.js"></script>
-        <script src="misc.js"></script>
-        <script src="games/tetris.js"></script>
-        <script src="evaluators/tetris.js"></script>
-    </head>
-    <body>
-        <div class="flex-container">
-            <div class="flex-item text" id="instructions">
-                <b>[Key Commands]</b><br />Load Fully Evolved Archive: [CTRL]<br />
-                Speed Up: [E]<br />
-                Slow Down: [D]<br />
-                Toggle AI: [A]<br />
-                Move Shape: [Arrow Keys]<br />
-                Rotate Shape: [Up Arrow]<br />
-                Drop Shape: [Down Arrow]<br />
-                Save State: [Q]<br />
-                Load State: [W]<br />
-                Get Archive: [G]<br />
-                Load Archive: [R]<br />
-                Pick Shape: [I,O,T,S,Z,J,L]
-            </div>
-            <div class="flex-item text" id="output"></div>
-            <div class="flex-item text" id="score"></div>
-        </div>
-        <script src="brain.js"></script>
-        <script>
-            $(window).keydown(function (e) {
-                if (e.ctrlKey) {
-                    var archiveJSON = $.ajax({
-                        url: "./archive.json",
-                        async: false
-                    }).responseText;
-                    loadArchive(archiveJSON);
-                    alert("Archive loaded successfully!");
-                }
-            });
-        </script>
-    </body>
+  <head>
+    <title>Gamer</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Inconsolata"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <style>
+      .char_0 {
+        color: #000;
+      }
+      i {
+        font-style: normal;
+      }
+      .char_1 {
+        color: #f92338;
+      }
+      .char_2 {
+        color: #c973ff;
+      }
+      .char_3 {
+        color: #1c76bc;
+      }
+      .char_4 {
+        color: #fee356;
+      }
+      .char_5 {
+        color: #53d504;
+      }
+      .char_6 {
+        color: #36e0ff;
+      }
+      .char_7 {
+        color: #f8931d;
+      }
+      .text {
+        color: #706c5a;
+        font-family: Inconsolata, Courier, monospace;
+        font-size: 20px;
+      }
+      #instructions {
+        font-size: small;
+        line-height: 110%;
+      }
+      a:link {
+        color: inherit;
+      }
+      pre {
+        font-size: 0.6em;
+      }
+      .flex-container {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap-reverse;
+        justify-content: center;
+        align-content: space-between;
+        align-items: center;
+      }
+      .flex-item {
+        order: 0;
+        flex: 0 1 auto;
+        align-self: auto;
+        padding: 0 2em 0 2em;
+      }
+    </style>
+    <script src="lib/jquery-3.3.1.js"></script>
+    <script src="random.js"></script>
+    <script src="misc.js"></script>
+    <script src="games/tetris.js"></script>
+    <script src="evaluators/tetris.js"></script>
+    <script src="views/tetris.js"></script>
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="flex-item text" id="instructions">
+        <b>[Key Commands]</b><br />Load Fully Evolved Archive: [CTRL]<br />
+        Speed Up: [E]<br />
+        Slow Down: [D]<br />
+        Toggle AI: [A]<br />
+        Move Shape: [Arrow Keys]<br />
+        Rotate Shape: [Up Arrow]<br />
+        Drop Shape: [Down Arrow]<br />
+        Save State: [Q]<br />
+        Load State: [W]<br />
+        Get Archive: [G]<br />
+        Load Archive: [R]<br />
+        Pick Shape: [I,O,T,S,Z,J,L]
+      </div>
+      <div class="flex-item text" id="output"></div>
+      <div class="flex-item text" id="score"></div>
+    </div>
+    <script src="brain.js"></script>
+    <script>
+      $(window).keydown(function(e) {
+        if (e.ctrlKey) {
+          var archiveJSON = $.ajax({
+            url: "./archive.json",
+            async: false
+          }).responseText;
+          loadArchive(archiveJSON);
+          alert("Archive loaded successfully!");
+        }
+      });
+    </script>
+  </body>
 </html>

@@ -1,14 +1,11 @@
 "use strict";
 
-let game = Tetris();
+let game = Game();
 let evaluator = Evaluator(game);
-
-//Block colors
-let colors = ["F92338", "C973FF", "1C76BC", "FEE356", "53D504", "36E0FF", "F8931D"];
+let view = View(game);
 
 //Used to help create a seeded generated random number for choosing shapes. makes results deterministic (reproducible) for debugging
-let rndSeed = 1;
-
+let rndSeed = randomNumBetween(0, 1000); // 1;
 
 //GAME VALUES
 // game speed
@@ -25,16 +22,12 @@ let speeds = [500, 100, 1, 0];
 let speedIndex = 0;
 //turn ai on or off
 let ai = true;
-//drawing game vs updating algorithms
-let draw = true;
 //how many so far?
 let movesTaken = 0;
 //max number of moves allowed in a generation
 let moveLimit = 500;
 //consists of move the 7 move parameters
 let moveAlgorithm = {};
-//set to highest rate move 
-let inspectMoveSelection = false;
 
 //GENETIC ALGORITHM VALUES
 //stores number of genomes, init at 50 
@@ -81,22 +74,18 @@ let initialize = function () {
       //set time, like a digital watch
       interval = setInterval(loop, speed);
     }
-    // if speed is 0, don't draw. otherwise, draw elements
-    draw = speed !== 0;
 
     //updates the game (update fitness, make a move, evaluate next move)
     update();
-    if (speed === 0) {
-      // update the score
-      updateScore(true);
-    }
+    // update the score
+    view.displayData();
   };
   //timer interval
   let interval = setInterval(loop, speed);
 };
 document.onLoad = initialize();
 
-function switchAi() {
+function toggleAi() {
   ai = !ai;
 }
 
@@ -127,7 +116,7 @@ window.onkeydown = function (event) {
     changeSpeed = true;
   } else if (characterPressed.toUpperCase() === "A") {
     //Turn on/off AI
-    switchAi();
+    toggleAi();
   } else if (characterPressed.toUpperCase() === "R") {
     //load saved generation values
     loadArchive(prompt("Insert archive:"));
@@ -137,9 +126,6 @@ window.onkeydown = function (event) {
     } else {
       prompt("Archive from last generation (including from last session):", localStorage.getItem("archive"));
     }
-    //    } else if (characterPressed.toUpperCase() === "F") {
-    //        //?
-    //        inspectMoveSelection = !inspectMoveSelection;
   } else if (!ai && game.onkeydown(event, characterPressed)) {
     return true;
   }
@@ -417,13 +403,8 @@ function makeNextMove() {
     //and evaluates the next genome
     evaluateNextGenome();
   } else {
-    // game make the next move
-    //        game.nextMove();
     //time to make a move
 
-    //we're going to re-draw, so lets store the old drawing
-    let oldDraw = clone(draw);
-    draw = false;
     //get all the possible moves
     let possibleMoves = getAllPossibleMoves();
     //lets store the current state since we will update it
@@ -458,10 +439,6 @@ function makeNextMove() {
         game.moveRight();
       }
     }
-
-
-    //and set the old drawing to the current
-    draw = oldDraw;
   }
 }
 
@@ -487,10 +464,10 @@ function update() {
       }
     }
   }
-  //output the state to the screen
-  output();
-  //and update the score
-  updateScore();
+  //output the state to the screen if not unlimited speed
+  speed !== 0 && view.displayGame();
+  //and update the score and stats
+  view.displayData();
 }
 
 /**
@@ -501,86 +478,12 @@ function reset() {
   game.reset();
 }
 
-//flip row x column to column x row
-function transpose(array) {
-  return array[0].map(function (col, i) {
-    return array.map(function (row) {
-      return row[i];
-    });
-  });
-}
-
-/**
- * Outputs the state to the screen.
- */
-function output() {
-  if (draw) {
-    let grid = game.grid();
-    let output = document.getElementById("output");
-    let html = "[";//"<h1>Gamer</h1>[";
-    let space = "&nbsp;";//"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-    let gridHtml = "";
-    for (let i = 0; i < grid.length; i++) {
-      if (i === 0) {
-        gridHtml += "[" + grid[i] + "]";
-      } else {
-        gridHtml += "<br />" + space + "[" + grid[i] + "]";
-      }
-    }
-    // apply style
-    gridHtml = replaceAll(gridHtml, "(0)", "_");
-    gridHtml = replaceAll(gridHtml, "(,)", "|");
-    gridHtml = replaceAll(gridHtml, "([0-9]+)", "<i class='char_$1'>$1</i>");
-
-    html += gridHtml;
-    html += "];";
-
-    output.innerHTML = html;
-  }
-}
-
-/**
- * Updates the side information.
- * @param {bool} force force display
- */
-function updateScore(force) {
-  if (draw || force) {
-    let upcomingShape = game.upcomingShape();
-    let scoreDetails = document.getElementById("score");
-    let html = "<h2>Score: " + game.score() + "</h2>";
-    html += "<b>--Next--</b>";
-    for (let i = 0; i < upcomingShape.length; i++) {
-      let next = replaceAll((upcomingShape[i] + ""), "0", "&nbsp;");
-      html += "<br />&nbsp;&nbsp;&nbsp;&nbsp;" + next;
-    }
-    for (let l = 0; l < 4 - upcomingShape.length; l++) {
-      html += "<br />";
-    }
-    for (let c = 0; c < colors.length; c++) {
-      html = replaceAll(html, "," + (c + 1), ",<font color=\"" + colors[c] + "\">" + (c + 1) + "</font>");
-      html = replaceAll(html, (c + 1) + ",", "<font color=\"" + colors[c] + "\">" + (c + 1) + "</font>,");
-    }
-    html += "<br />Speed: " + speed;
-    if (ai) {
-      html += "<br />Moves: " + movesTaken + "/" + moveLimit;
-      html += "<br />Generation: " + generation;
-      html += "<br />Individual: " + (currentGenome + 1) + "/" + populationSize;
-      html += "<br /><pre>" + JSON.stringify(genomes[currentGenome], null, 2) + "</pre>";
-      //            if (inspectMoveSelection) {
-      //                html += "<br /><pre style=\"font-size:12px\">" + JSON.stringify(moveAlgorithm, null, 2) + "</pre>";
-      //            }
-    }
-    html = replaceAll(replaceAll(replaceAll(html, "&nbsp;,", "&nbsp;&nbsp;"), ",&nbsp;", "&nbsp;&nbsp;"), ",", "&nbsp;");
-    scoreDetails.innerHTML = html;
-  }
-}
-
 /**
  * Returns the current game state in an object.
  * @return {State} The current game state.
  */
 function getState() {
-  let state = {
+  return {
     grid: clone(game.grid()),
     currentShape: clone(game.currentShape()),
     upcomingShape: clone(game.upcomingShape() || 0),
@@ -589,7 +492,6 @@ function getState() {
     rndSeed: clone(rndSeed),
     score: clone(game.score())
   };
-  return state;
 }
 
 /**

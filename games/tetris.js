@@ -1,6 +1,6 @@
 "use strict";
 
-const Tetris = (config = {}) => {
+const Game = (config = {}) => {
   const gameHeight = config.gameHeight || 20;
   const gameWidth = config.gameWidth || 10;
 
@@ -86,7 +86,7 @@ const Tetris = (config = {}) => {
     }
   };
 
-  const onkeydown = function(event, characterPressed) {
+  const onkeydown = function (event, characterPressed) {
     if (event.keyCode === 38) {
       rotateShape();
     } else if (event.keyCode === 40) {
@@ -122,7 +122,7 @@ const Tetris = (config = {}) => {
   /**
    * Moves the current shape to the right if possible.
    */
-  const moveRight = function() {
+  const moveRight = function () {
     removeShape();
     _currentShape.x++;
     if (collides(_grid, _currentShape)) {
@@ -183,7 +183,7 @@ const Tetris = (config = {}) => {
   /**
    * Clears any rows that are completely filled.
    */
-  const clearRows = function() {
+  const clearRows = function () {
     //empty array for rows to clear
     const rowsToClear = [];
     //for each row in the _grid
@@ -317,7 +317,7 @@ const Tetris = (config = {}) => {
    * @param  {Shape} object The shape to check.
    * @return {Boolean} Whether the shape and _grid collide.
    */
-  const collides = function(scene, object) {
+  const collides = function (scene, object) {
     //for the size of the shape (row x column)
     for (let row = 0; row < object.shape.length; row++) {
       for (let col = 0; col < object.shape[row].length; col++) {
@@ -338,7 +338,7 @@ const Tetris = (config = {}) => {
   };
 
   //for rotating a shape, how many times should we rotate
-  const rotate = function(matrix, times) {
+  const rotate = function (matrix, times) {
     //for each time
     for (let t = 0; t < times; t++) {
       //flip the shape matrix
@@ -351,45 +351,20 @@ const Tetris = (config = {}) => {
     return matrix;
   };
 
-  const nextMove = function() {
-    return; // TODO cette méthode ne fonctionne pas: pourquoi ?
-    //get all the possible moves
-    let possibleMoves = getAllPossibleMoves();
-    //whats the next shape to play
-    nextShape();
-    //for each possible move
-    for (let i = 0; i < possibleMoves.length; i++) {
-      //get the best move. so were checking all the possible moves, for each possible move. moveception.
-      let nextMove = getHighestRatedMove(getAllPossibleMoves());
-      //add that rating to an array of highest rates moves
-      possibleMoves[i].rating += nextMove.rating;
-    }
-    //get the highest rated move ever
-    let move = getHighestRatedMove(possibleMoves);
-    //then rotate the shape as it says too
-    for (let rotations = 0; rotations < move.rotations; rotations++) {
-      rotateShape();
-    }
-    //and move left as it says
-    if (move.translation < 0) {
-      for (let lefts = 0; lefts < Math.abs(move.translation); lefts++) {
-        moveLeft();
-      }
-      //and right as it says
-    } else if (move.translation > 0) {
-      for (let rights = 0; rights < move.translation; rights++) {
-        moveRight();
-      }
-    }
-  };
-
-  const initialize = function() {
+  const initialize = function () {
     resetGrid();
     //get the next available shape from the bag
     nextShape();
     //applies the shape to the grid
     applyShape();
   };
+
+  //flip row x column to column x row
+  const transpose = (array) =>
+    array[0].map((col, i) =>
+      array.map((row) => row[i]
+      )
+    );
 
   // public
   return {
@@ -413,7 +388,6 @@ const Tetris = (config = {}) => {
     nextShape: nextShape.bind(this),
     //generateBag: generateBag,
     // interface
-    nextMove: nextMove.bind(this),
     initialize: initialize.bind(this)
   };
 };
