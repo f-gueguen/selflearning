@@ -65,12 +65,11 @@
         padding: 0 2em 0 2em;
       }
     </style>
-    <script src="lib/jquery-3.3.1.js"></script>
-    <script src="random.js"></script>
-    <script src="misc.js"></script>
-    <script src="games/tetris.js"></script>
-    <script src="evaluators/tetris.js"></script>
-    <script src="views/tetris.js"></script>
+    <script src="helpers/random.js"></script>
+    <script src="helpers/misc.js"></script>
+    <script src="games/tetris/game.js"></script>
+    <script src="games/tetris/evaluator.js"></script>
+    <script src="games/tetris/view.js"></script>
   </head>
   <body>
     <div class="flex-container">
@@ -92,17 +91,5 @@
       <div class="flex-item text" id="score"></div>
     </div>
     <script src="brain.js"></script>
-    <script>
-      $(window).keydown(function(e) {
-        if (e.ctrlKey) {
-          var archiveJSON = $.ajax({
-            url: "./archive.json",
-            async: false
-          }).responseText;
-          loadArchive(archiveJSON);
-          alert("Archive loaded successfully!");
-        }
-      });
-    </script>
   </body>
 </html>

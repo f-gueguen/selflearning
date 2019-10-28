@@ -47,7 +47,7 @@ const View = (game) => {
       html = replaceAll(html, "," + (c + 1), ",<font color=\"" + colors[c] + "\">" + (c + 1) + "</font>");
       html = replaceAll(html, (c + 1) + ",", "<font color=\"" + colors[c] + "\">" + (c + 1) + "</font>,");
     }
-    html += "<br />Speed: " + speed;
+    html += "<br />Speed: " + speeds[speedIndex];
     if (ai) {
       html += "<br />Moves: " + movesTaken + "/" + moveLimit;
       html += "<br />Generation: " + generation;

@@ -359,13 +359,6 @@ const Game = (config = {}) => {
     applyShape();
   };
 
-  //flip row x column to column x row
-  const transpose = (array) =>
-    array[0].map((col, i) =>
-      array.map((row) => row[i]
-      )
-    );
-
   // public
   return {
     gameHeight,

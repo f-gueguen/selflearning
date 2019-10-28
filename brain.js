@@ -8,18 +8,16 @@ let view = View(game);
 let rndSeed = randomNumBetween(0, 1000); // 1;
 
 //GAME VALUES
-// game speed
-let speed = 500;
-// boolean for changing game speed
-let changeSpeed = false;
 //for storing current state, we can load later
 let saveState;
 //stores current game state
 let roundState;
 //list of available game speeds
-let speeds = [500, 100, 1, 0];
+let speeds = [512, 256, 128, 1, 0];
 //inded in game speed array
 let speedIndex = 0;
+// tag when changing the speed
+let changeSpeed = false;
 //turn ai on or off
 let ai = true;
 //how many so far?
@@ -72,7 +70,7 @@ let initialize = function () {
       //stop time
       clearInterval(interval);
       //set time, like a digital watch
-      interval = setInterval(loop, speed);
+      interval = setInterval(loop, speeds[speedIndex]);
     }
 
     //updates the game (update fitness, make a move, evaluate next move)
@@ -81,7 +79,7 @@ let initialize = function () {
     view.displayData();
   };
   //timer interval
-  let interval = setInterval(loop, speed);
+  let interval = setInterval(loop, speeds[speedIndex]);
 };
 document.onLoad = initialize();
 
@@ -91,6 +89,10 @@ function toggleAi() {
 
 //key options
 window.onkeydown = function (event) {
+  if (event.ctrlKey) {
+    loadJSON("./archive.json", loadArchive);
+    return false;
+  }
 
   let characterPressed = String.fromCharCode(event.keyCode);
   if (characterPressed.toUpperCase() === "Q") {
@@ -103,7 +105,6 @@ window.onkeydown = function (event) {
     if (speedIndex < 0) {
       speedIndex = speeds.length - 1;
     }
-    speed = speeds[speedIndex];
     changeSpeed = true;
   } else if (characterPressed.toUpperCase() === "E") {
     //speed up
@@ -111,8 +112,7 @@ window.onkeydown = function (event) {
     if (speedIndex >= speeds.length) {
       speedIndex = 0;
     }
-    //adjust speed index
-    speed = speeds[speedIndex];
+
     changeSpeed = true;
   } else if (characterPressed.toUpperCase() === "A") {
     //Turn on/off AI
@@ -465,7 +465,7 @@ function update() {
     }
   }
   //output the state to the screen if not unlimited speed
-  speed !== 0 && view.displayGame();
+  speeds[speedIndex] !== 0 && view.displayGame();
   //and update the score and stats
   view.displayData();
 }
