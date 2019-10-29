@@ -29,9 +29,8 @@ const View = (game) => {
 
   /**
    * Updates the side information.
-   * @param {bool} force force display
    */
-  const displayData = (force = true) => {
+  const displayData = () => {
     let upcomingShape = game.upcomingShape();
     let scoreDetails = document.getElementById("score");
     let html = "<h2>Score: " + game.score() + "</h2>";
@@ -49,7 +48,7 @@ const View = (game) => {
     }
     html += "<br />Speed: " + speeds[speedIndex];
     if (ai) {
-      html += "<br />Moves: " + movesTaken + "/" + moveLimit;
+      html += "<br />Move: " + movesTaken + "/" + moveLimit;
       html += "<br />Generation: " + generation;
       html += "<br />Individual: " + (currentGenome + 1) + "/" + populationSize;
       html += "<br /><pre>" + JSON.stringify(genomes[currentGenome], null, 2) + "</pre>";

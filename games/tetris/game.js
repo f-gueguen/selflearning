@@ -110,13 +110,11 @@ const Game = (config = {}) => {
    * Moves the current shape to the left if possible.
    */
   const moveLeft = () => {
-    //remove current shape, slide it over, if it collides though, slide it back
     removeShape();
     _currentShape.x--;
     if (collides(_grid, _currentShape)) {
       _currentShape.x++;
     }
-    //apply the new shape
     applyShape();
   };
 
@@ -141,30 +139,29 @@ const Game = (config = {}) => {
     let result = { lose: false, moved: true, rowsCleared: 0 };
     //remove the shape, because we will draw a new one
     removeShape();
-    //move it down the y axis
+    // move it down
     _currentShape.y++;
-    //if it collides with the _grid
+
     if (collides(_grid, _currentShape)) {
-      //update its position
+      // If collides, cancel its move
       _currentShape.y--;
-      //apply (stick) it to the _grid
+      // Apply it to the _grid
       applyShape();
-      //move on to the next shape in the _bag
+      // Move on to the next shape in the _bag
       nextShape();
-      //clear rows and get number of rows cleared
+      // Clear rows if needed
       result.rowsCleared = clearRows();
 
-      //check again if this shape collides with our _grid
+      // If the new shape collides, we lose
       if (collides(_grid, _currentShape)) {
-        //reset
         result.lose = true;
         reset();
       }
       result.moved = false;
+    } else {
+      applyShape();
+      _score++;
     }
-    //apply shape and update the score
-    applyShape();
-    _score++;
     return result;
   };
 
@@ -306,13 +303,11 @@ const Game = (config = {}) => {
     return false;
   };
 
-  //for rotating a shape, how many times should we rotate
-  const rotate = function (matrix, times) {
-    //for each time
+  // Rotate a shape
+  const rotate = function (matrix, times = 1) {
     for (let t = 0; t < times; t++) {
-      //flip the shape matrix
       matrix = transpose(matrix);
-      //and for the length of the matrix, reverse each column
+      // for the length of the matrix, reverse each column
       for (let i = 0; i < matrix.length; i++) {
         matrix[i].reverse();
       }
@@ -334,17 +329,17 @@ const Game = (config = {}) => {
     upcomingShape,
     bag,
     bagIndex,
-    reset: reset.bind(this),
-    onkeydown: onkeydown.bind(this),
-    moveLeft: moveLeft.bind(this),
-    moveRight: moveRight.bind(this),
-    moveDown: moveDown.bind(this),
-    rotateShape: rotateShape.bind(this),
+    reset,
+    onkeydown,
+    moveLeft,
+    moveRight,
+    moveDown,
+    rotateShape,
     //clearRows: clearRows,
-    applyShape: applyShape.bind(this),
-    removeShape: removeShape.bind(this),
-    nextShape: nextShape.bind(this),
+    applyShape,
+    removeShape,
+    nextShape,
     // interface
-    initialize: initialize.bind(this)
+    initialize
   };
 };
