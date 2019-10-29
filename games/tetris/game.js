@@ -33,6 +33,8 @@ const Game = (config = {}) => {
     Z: [[7, 7, 0], [0, 7, 7], [0, 0, 0]]
   };
 
+  const clearRowScore = [0, 400, 1000, 3000, 12000];
+
   //coordinates and shape parameter of current block we can update
   let _currentShape = { x: 0, y: 0, shape: undefined };
   const currentShape = currentShape => {
@@ -72,7 +74,6 @@ const Game = (config = {}) => {
   const reset = () => {
     _score = 0;
     resetGrid();
-    generateBag();
     nextShape();
   };
 
@@ -181,38 +182,22 @@ const Game = (config = {}) => {
   };
 
   /**
-   * Clears any rows that are completely filled.
+   * Clears any rows that are filled
    */
-  const clearRows = function () {
+  const clearRows = () => {
     //empty array for rows to clear
     const rowsToClear = [];
     //for each row in the _grid
     for (let row = 0; row < _grid.length; row++) {
-      let containsEmptySpace = false;
-      //for each column
-      for (let col = 0; col < _grid[row].length; col++) {
-        //if its empty
-        if (_grid[row][col] === 0) {
-          //set this value to true
-          containsEmptySpace = true;
-        }
-      }
-      //if none of the columns in the row were empty
+      const containsEmptySpace = _grid[row].some(v => v === 0);
       if (!containsEmptySpace) {
-        //add the row to our list, it's completely filled!
+        // Memorize the row if it's filled
         rowsToClear.push(row);
       }
     }
-    //increase this.score for up to 4 rows. it maxes out at 12000
-    if (rowsToClear.length === 1) {
-      _score += 400;
-    } else if (rowsToClear.length === 2) {
-      _score += 1000;
-    } else if (rowsToClear.length === 3) {
-      _score += 3000;
-    } else if (rowsToClear.length >= 4) {
-      _score += 12000;
-    }
+    // Add score depending on number of rows cleared
+    _score += clearRowScore[rowsToClear.length];
+
     //new array for cleared rows
     let rowsCleared = clone(rowsToClear.length);
     //for each value
@@ -260,34 +245,30 @@ const Game = (config = {}) => {
   };
 
   /**
-   * Cycles to the next shape in the _bag.
+   * Cycles to the next shape in the _bag
+   * Tetris usually come with a bag of the 7 tetrominos shuffled
    */
   const nextShape = () => {
     //increment the _bag index
-    _bagIndex += 1;
-    //if we're at the start or end of the _bag
-    if (_bag.length === 0 || _bagIndex === _bag.length) {
-      //generate a new _bag of genomes
+    _bagIndex = (_bagIndex + 1) % _bag.length;
+    //if we're at the beginning the _bag, generate a new bag
+    if (_bag.length === 0) {
       generateBag();
     }
+    // TODO avoir un bag 2 fois plus grand et reapprovisionner quand la moitie est partie?
     //if almost at end of _bag
     if (_bagIndex === _bag.length - 1) {
-      //store previous seed
-      let prevSeed = rndSeed;
       //generate upcoming shape
       _upcomingShape = randomProperty(shapes);
-      //set random seed
-      rndSeed = prevSeed;
     } else {
       //get the next shape from our _bag
       _upcomingShape = shapes[_bag[_bagIndex + 1]];
     }
     //get our current shape from the _bag
     _currentShape.shape = shapes[_bag[_bagIndex]];
-    //define its position
-    _currentShape.x =
-      Math.floor(_grid[0].length / 2) -
-      Math.ceil(_currentShape.shape[0].length / 2);
+    // Define its position
+    // ~~ optimize Math.floor, -~ optimize Math.ceil (on positive numbers)
+    _currentShape.x = ~~(_grid[0].length / 2) - -~(_currentShape.shape[0].length / 2);
     _currentShape.y = 0;
   };
 
@@ -295,20 +276,7 @@ const Game = (config = {}) => {
    * Generates the _bag of shapes.
    */
   const generateBag = () => {
-    _bag = [];
-    let contents = "";
-    //7 shapes
-    for (let i = 0; i < 7; i++) {
-      //generate shape randomly
-      let shape = randomKey(shapes);
-      while (contents.indexOf(shape) !== -1) {
-        shape = randomKey(shapes);
-      }
-      //update _bag with generated shape
-      _bag[i] = shape;
-      contents += shape;
-    }
-    //reset _bag index
+    _bag = shuffleArray(Object.keys(shapes));
     _bagIndex = 0;
   };
 
@@ -353,11 +321,7 @@ const Game = (config = {}) => {
   };
 
   const initialize = function () {
-    resetGrid();
-    //get the next available shape from the bag
-    nextShape();
-    //applies the shape to the grid
-    applyShape();
+    reset();
   };
 
   // public
@@ -380,7 +344,6 @@ const Game = (config = {}) => {
     applyShape: applyShape.bind(this),
     removeShape: removeShape.bind(this),
     nextShape: nextShape.bind(this),
-    //generateBag: generateBag,
     // interface
     initialize: initialize.bind(this)
   };

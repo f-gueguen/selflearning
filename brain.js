@@ -1,11 +1,11 @@
 "use strict";
 
-let game = Game();
+let game = Game({ gameHeight: 15, gameWidth: 10 });
 let evaluator = Evaluator(game);
 let view = View(game);
 
 //Used to help create a seeded generated random number for choosing shapes. makes results deterministic (reproducible) for debugging
-let rndSeed = randomNumBetween(0, 1000); // 1;
+let rndSeed = randomBetween(0, 1000); // 1;
 
 //GAME VALUES
 //for storing current state, we can load later
@@ -23,11 +23,13 @@ let ai = true;
 //how many so far?
 let movesTaken = 0;
 //max number of moves allowed in a generation
-let moveLimit = 500;
+let moveLimit = 2000;
 //consists of move the 7 move parameters
 let moveAlgorithm = {};
-// percentratioage of fittest genomes to survive the generation
-let ratioFittestToSurvive = 0.2;
+// percentage of fittest genomes to survive the generation
+let ratioFittestToSurvive = 0.15;
+// ratio of brand new genomes
+let ratioBrandNewGenomes = 0.1;
 
 //GENETIC ALGORITHM VALUES
 //stores number of genomes, init at 50 
@@ -89,6 +91,15 @@ function toggleAi() {
   ai = !ai;
 }
 
+function speedUp() {
+  speedIndex = (speedIndex + 1) % speeds.length;
+  changeSpeed = true;
+}
+function speedDown() {
+  speedIndex = (speedIndex + speeds.length - 1) % speeds.length;
+  changeSpeed = true;
+}
+
 //key options
 window.onkeydown = function (event) {
   if (event.ctrlKey) {
@@ -102,20 +113,9 @@ window.onkeydown = function (event) {
   } else if (characterPressed.toUpperCase() === "W") {
     loadState(saveState);
   } else if (characterPressed.toUpperCase() === "D") {
-    //slow down
-    speedIndex--;
-    if (speedIndex < 0) {
-      speedIndex = speeds.length - 1;
-    }
-    changeSpeed = true;
+    speedDown();
   } else if (characterPressed.toUpperCase() === "E") {
-    //speed up
-    speedIndex++;
-    if (speedIndex >= speeds.length) {
-      speedIndex = 0;
-    }
-
-    changeSpeed = true;
+    speedUp();
   } else if (characterPressed.toUpperCase() === "A") {
     //Turn on/off AI
     toggleAi();
@@ -138,34 +138,34 @@ window.onkeydown = function (event) {
  * Creates the initial population of genomes, each with random genes.
  */
 function createInitialPopulation() {
-  //inits the array
   genomes = [];
-  //for a given population size
   for (let i = 0; i < populationSize; i++) {
-    //randomly initialize the 7 values that make up a genome
-    //these are all weight values that are updated through evolution
-    let genome = {
-      //unique identifier for a genome
-      id: Math.random(),
-      //The weight of each row cleared by the given move. the more rows that are cleared, the more this weight increases
-      rowsCleared: Math.random() - 0.5,
-      //the absolute height of the highest column to the power of 1.5
-      //added so that the algorithm can be able to detect if the blocks are stacking too high
-      weightedHeight: Math.random() - 0.5,
-      //The sum of all the column’s heights
-      cumulativeHeight: Math.random() - 0.5,
-      //the highest column minus the lowest column
-      relativeHeight: Math.random() - 0.5,
-      //the sum of all the empty cells that have a block above them (basically, cells that are unable to be filled)
-      holes: Math.random() * 0.5,
-      // the sum of absolute differences between the height of each column 
-      //(for example, if all the shapes on the grid lie completely flat, then the roughness would equal 0).
-      roughness: Math.random() - 0.5
-    };
-    //add them to the array
+    const genome = createRandomGenome();
     genomes.push(genome);
   }
   evaluateNextGenome();
+}
+
+function createRandomGenome() {
+  //these are all weight values that are updated through evolution
+  return {
+    //unique identifier for a genome
+    id: Math.random(),
+    //The weight of each row cleared by the given move. the more rows that are cleared, the more this weight increases
+    rowsCleared: Math.random() - 0.5,
+    //the absolute height of the highest column to the power of 1.5
+    //added so that the algorithm can be able to detect if the blocks are stacking too high
+    weightedHeight: Math.random() - 0.5,
+    //The sum of all the column’s heights
+    cumulativeHeight: Math.random() - 0.5,
+    //the highest column minus the lowest column
+    relativeHeight: Math.random() - 0.5,
+    //the sum of all the empty cells that have a block above them (basically, cells that are unable to be filled)
+    holes: Math.random() * 0.5,
+    // the sum of absolute differences between the height of each column 
+    //(for example, if all the shapes on the grid lie completely flat, then the roughness would equal 0).
+    roughness: Math.random() - 0.5
+  };
 }
 
 /**
@@ -208,10 +208,14 @@ function evolve() {
   const getRandomGenome = () =>
     genomes[randomWeightedNumBetween(0, genomes.length - 1)];
 
-  //remove the tail end of genomes, focus on the fittest
-  while (genomes.length > populationSize / 2) {
-    genomes.pop();
+  const removedGenomes = [];
+  //remove the tail end of genomes, focus mostly on the fittest
+  while (genomes.length > populationSize / 3) {
+    removedGenomes.push(genomes.pop());
   }
+  // Keep 1/4 of those unfit genomes for diversity
+  const genomesToSave = removedGenomes.filter(() => !randomBetween(0, 4));
+  genomes.concat(genomesToSave);
 
   //create children array
   let children = [];
@@ -220,9 +224,14 @@ function evolve() {
     children.push(clone(genomes[i]));
   }
 
-  //add population sized amount of children
+  // add brand new genomes for diversity
+  for (let i = 0; i < genomes.length * ratioBrandNewGenomes; i++) {
+    const genome = createRandomGenome();
+    children.push(genome);
+  }
+
+  // Fill population with mix of previous genomes
   while (children.length < populationSize) {
-    //crossover between two random genomes to make a child
     children.push(makeChild(getRandomGenome(), getRandomGenome()));
   }
   //create new genome array
@@ -315,7 +324,7 @@ function getAllPossibleMoves() {
       }
       //if the shape has moved at all
       let currentShape = game.currentShape();
-      if (!contains(oldX, currentShape.x)) {
+      if (!oldX.includes(currentShape.x)) {
         //move it down
         let moveDownResults = game.moveDown();
         while (moveDownResults.moved) {
@@ -458,9 +467,9 @@ function update() {
       }
     }
   }
-  //output the state to the screen if not unlimited speed
+  // Refresh game board if not unlimited speed
   speeds[speedIndex] !== 0 && view.displayGame();
-  //and update the score and stats
+  // Refresh the score and stats view
   view.displayData();
 }
 

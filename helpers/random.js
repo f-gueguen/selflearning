@@ -11,8 +11,9 @@ const randomProperty = (obj) => obj[randomKey(obj)];
  * @return {Property}     A random property key.
  */
 const randomKey = (obj) => {
-  var keys = Object.keys(obj);
-  var i = seededRandom(0, keys.length);
+  const keys = Object.keys(obj);
+  const i = randomBetween(0, keys.length - 1); // seededRandom can be used for deterministic outcome
+
   return keys[i];
 }
 
@@ -27,13 +28,15 @@ const seededRandom = (min, max) => {
   min = min || 0;
 
   rndSeed = (rndSeed * 9301 + 49297) % 233280;
-  var rnd = rndSeed / 233280;
+  const rnd = rndSeed / 233280;
 
-  return Math.floor(min + rnd * (max - min));
+  return ~~(min + rnd * (max - min));
 }
 
 const randomChoice = (propOne, propTwo) => clone(~~(Math.random() * 2) ? propOne : propTwo);
 
-const randomWeightedNumBetween = (min, max) => Math.floor(Math.pow(Math.random(), 2) * (max - min + 1) + min);
+const randomWeightedNumBetween = (min, max) => ~~(Math.pow(Math.random(), 2) * (max - min + 1) + min);
 
-const randomNumBetween = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
+const randomBetween = (min, max) => ~~(Math.random() * (max - min + 1)) + min;
+
+const shuffleArray = array => array.map((a) => [Math.random(), a]).sort((a, b) => a[0] - b[0]).map((a) => a[1]);
