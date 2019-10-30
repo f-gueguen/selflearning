@@ -37,32 +37,6 @@ let currentGenome = -1;
 //stores number of genomes, init at 50 
 let populationSize = 50;
 
-// main function, called on load
-let initialize = function () {
-  game.initialize();
-  brain.initialize();
-
-  //the game loop
-  let loop = function () {
-    //boolean for changing game speed
-    if (changeSpeed) {
-      //restart the clock
-      //stop time
-      clearInterval(interval);
-      //set time, like a digital watch
-      interval = setInterval(loop, speeds[speedIndex]);
-    }
-
-    //updates the game (update fitness, make a move, evaluate next move)
-    update();
-    // update the score
-    view.displayData();
-  };
-  //timer interval
-  let interval = setInterval(loop, speeds[speedIndex]);
-};
-document.onLoad = initialize();
-
 function toggleAi() {
   ai = !ai;
 }
@@ -144,3 +118,29 @@ function reset() {
   movesTaken = 0;
   game.reset();
 }
+
+// main function, called on load
+let initialize = function () {
+  game.initialize();
+  brain.initialize();
+
+  //the game loop
+  let loop = function () {
+    //boolean for changing game speed
+    if (changeSpeed) {
+      //restart the clock
+      //stop time
+      clearInterval(interval);
+      //set time, like a digital watch
+      interval = setInterval(loop, speeds[speedIndex]);
+    }
+
+    //updates the game (update fitness, make a move, evaluate next move)
+    update();
+    // update the score
+    view.displayData();
+  };
+  //timer interval
+  let interval = setInterval(loop, speeds[speedIndex]);
+};
+document.onLoad = initialize();
