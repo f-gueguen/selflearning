@@ -6,7 +6,7 @@ let view = View(game);
 let brain = Brain({ game, evaluator });
 
 // Used to help create a seeded generated random number for choosing shapes. makes results deterministic (reproducible) for debugging
-let rndSeed = randomBetween(0, 1000); // 1;
+let rndSeed = Random.numberBetween(0, 1000); // 1;
 
 //GAME VALUES
 //for storing current state, we can load later
@@ -15,8 +15,6 @@ let saveState;
 let speeds = [512, 256, 128, 1, 0];
 //inded in game speed array
 let speedIndex = 0;
-// tag when changing the speed
-let changeSpeed = false;
 //turn ai on or off
 let ai = true;
 //how many so far?
@@ -41,11 +39,9 @@ function toggleAi() {
 
 function speedUp() {
   speedIndex = (speedIndex + 1) % speeds.length;
-  changeSpeed = true;
 }
 function speedDown() {
   speedIndex = (speedIndex + speeds.length - 1) % speeds.length;
-  changeSpeed = true;
 }
 
 //key options
@@ -86,21 +82,22 @@ window.onkeydown = function (event) {
  * Updates the game.
  */
 function update() {
+  /*
+  algo devrait etre:
+  - appliquer coup suivant et moveTaken++
+  - si perdu, genome suivant et moveTaken = 0
+  */
+
   //move the shape down
   let results = game.moveDown();
-  //if we have our AI turned on and the current genome is nonzero
-  if (ai /* && currentGenome !== -1*/) {
-    //if that didn't do anything
-    if (!results.moved) {
-      //if we lost
-      if (results.lose) {
-        //move on to the next genome
-        // TODO renommer pour quelque chose de plus generique
-        brain.evaluateNextGenome();
-      } else {
-        //if we didnt lose, make the next move
-        brain.makeNextMove();
-      }
+
+  if (ai) {
+    if (movesTaken > moveLimit || results.lose) {
+      brain.evaluateNextGenome();
+      movesTaken = 0;
+    } else if (!results.moved) {
+      brain.makeNextMove();
+      movesTaken++;
     }
   }
   // Refresh game board if not unlimited speed
@@ -123,22 +120,13 @@ let initialize = function () {
   brain.initialize();
 
   //the game loop
-  let loop = function () {
-    //boolean for changing game speed
-    if (changeSpeed) {
-      //restart the clock
-      //stop time
-      clearInterval(interval);
-      //set time, like a digital watch
-      interval = setInterval(loop, speeds[speedIndex]);
-    }
-
+  const loop = function () {
     //updates the game (update fitness, make a move, evaluate next move)
     update();
-    // update the score
-    view.displayData();
+    setTimeout(loop, speeds[speedIndex]);
   };
+
   //timer interval
-  let interval = setInterval(loop, speeds[speedIndex]);
+  setTimeout(loop, speeds[speedIndex]);
 };
 document.onLoad = initialize();

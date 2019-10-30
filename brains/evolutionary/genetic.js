@@ -17,7 +17,7 @@ const Brain = (config) => {
   const mutationStep = config.mutationStep || 0.1;
 
   // Used to help create a seeded generated random number for choosing shapes. makes results deterministic (reproducible) for debugging
-  let rndSeed = config.rndSeed || randomBetween(0, 1000); // 1;
+  let rndSeed = config.rndSeed || Random.numberBetween(0, 1000); // 1;
 
   //GAME VALUES
   //stores current game state
@@ -32,68 +32,59 @@ const Brain = (config) => {
     genomes: []
   };
 
-  //main function, called on load
-  let initialize = function () {
-    archive.populationSize = populationSize;
+  /**
+   * Returns the current game state in an object.
+   * @return {State} The current game state.
+   */
+  const getState = () => clone({
+    grid: game.grid(),
+    currentShape: game.currentShape(),
+    upcomingShape: game.upcomingShape() || 0,
+    bag: game.bag(),
+    bagIndex: game.bagIndex(),
+    rndSeed,
+    score: game.score()
+  });
 
-    // Set both save state and current state from the game
-    roundState = getState();
+  /**
+   * Loads the game state from the given state object.
+   * @param  {State} state The state to load.
+   */
+  const loadState = (state) => {
+    game.grid(clone(state.grid));
+    game.currentShape(clone(state.currentShape));
+    game.upcomingShape(clone(state.upcomingShape));
+    game.bag(clone(state.bag));
+    game.bagIndex(clone(state.bagIndex));
+    rndSeed = clone(state.rndSeed);
+    game.score(clone(state.score));
+  }
 
-    // Create an initial population of genomes
-    createInitialPopulation();
-  };
+  const createRandomGenome = () =>
+    Object.keys(evaluator).reduce((genome, key) => {
+      genome[key] = Math.random() - 0.5;
+      return genome;
+    }, { id: genomeId++, fitness: -1, });
 
   /**
    * Creates the initial population of genomes, each with random genes.
    */
-  function createInitialPopulation() {
+  const createInitialPopulation = () => {
     genomes = [];
     for (let i = 0; i < populationSize; i++) {
       const genome = createRandomGenome();
       genomes.push(genome);
     }
-    evaluateNextGenome();
-  }
-
-  function createRandomGenome() {
-    //these are all weight values that are updated through evolution
-    const genome = {
-      id: genomeId++,
-      fitness: -1,
-    };
-    Object.keys(evaluator).forEach(key => {
-      genome[key] = Math.random() - 0.5;
-    });
-    return genome;
-  }
-
-  /**
-   * Evaluates the next genome in the population. If there is none, evolves the population.
-   */
-  function evaluateNextGenome() {
-    //increment index in genome array
-    currentGenome++;
-    //If there is none, evolves the population.
-    if (currentGenome === genomes.length) {
-      evolve();
-    }
-    //load current gamestate
-    loadState(roundState);
-    //reset moves taken
-    movesTaken = 0;
   }
 
   /**
    * Evolves the entire population and goes to the next generation.
    */
-  function evolve() {
-
+  const evolve = () => {
     console.log("Generation " + generation + " evaluated.");
-    //reset current genome for new generation
+
     currentGenome = 0;
-    //increment generation
     generation++;
-    //resets the game
     reset();
     //gets the current game state
     roundState = getState();
@@ -104,7 +95,7 @@ const Brain = (config) => {
     console.log("Elite's fitness: " + genomes[0].fitness);
 
     // Keep first tier and a fourth of the remaining unfit
-    genomes = genomes.filter((_g, i) => i < (populationSize / 3) || !randomBetween(0, 4));
+    genomes = genomes.filter((_g, i) => i < (populationSize / 3) || !Random.numberBetween(0, 4));
 
     // Create new population
     let children = [];
@@ -137,12 +128,25 @@ const Brain = (config) => {
     archive.genomes = clone(genomes);
     archive.currentGeneration = clone(generation);
     console.log(JSON.stringify(archive));
-    //store archive, thanks JS localstorage! (short term memory)
     localStorage.setItem("archive", JSON.stringify(archive));
   }
 
+  /**
+   * Evaluates the next genome in the population. If there is none, evolves the population.
+   */
+  const evaluateNextGenome = () => {
+    //increment index in genome array
+    currentGenome++;
+    //If there is none, evolves the population.
+    if (currentGenome === genomes.length) {
+      evolve();
+    }
+    //load current gamestate
+    loadState(roundState);
+  }
+
   // Returns a random genome from the population
-  const getRandomGenome = () => genomes[randomWeightedNumBetween(0, genomes.length - 1)];
+  const getRandomGenome = () => genomes[Random.weightedNumBetween(0, genomes.length - 1)];
 
   const mutateGenome = (genome) =>
     Object.keys(genome).forEach(key => {
@@ -165,7 +169,7 @@ const Brain = (config) => {
     const child = { id: genomeId++, fitness: -1 };
     Object.keys(mum).forEach(key => {
       if (!['fitness', 'id'].includes(key)) {
-        child[key] = randomChoice(mum[key], dad[key]);
+        child[key] = Random.oneInSet(mum[key], dad[key]);
       }
     });
     return child;
@@ -175,9 +179,10 @@ const Brain = (config) => {
    * Returns an array of all the possible moves that could occur in the current state, rated by the parameters of the current genome.
    * @return {Array} An array of all the possible moves that could occur.
    */
+  // TODO extraire dans game
   function getAllPossibleMoves() {
     let lastState = getState();
-    let possibleMoves = [];
+    const possibleMoves = [];
 
     //for each possible rotation
     for (let rotations = 0; rotations < 4; rotations++) {
@@ -270,90 +275,50 @@ const Brain = (config) => {
    * Makes a move, which is decided upon using the parameters in the current genome.
    */
   function makeNextMove() {
-    //increment number of moves taken
-    movesTaken++;
-
     //update this genome's fitness value using the game score
     genomes[currentGenome].fitness = game.score();
 
-    if (movesTaken > moveLimit) {
-      // if its over the limit of moves, evaluates the next genome
-      evaluateNextGenome();
-    } else {
-      // make the next move
+    //get all the possible moves
+    let possibleMoves = getAllPossibleMoves();
+    //lets store the current state since we will update it
+    let lastState = getState();
 
-      //get all the possible moves
-      let possibleMoves = getAllPossibleMoves();
-      //lets store the current state since we will update it
-      let lastState = getState();
-
-      // TODO ne devrait pas connaitre ca (depend du jeu)
-      //whats the next shape to play
-      game.nextShape();
-      //for each possible move 
-      for (let i = 0; i < possibleMoves.length; i++) {
-        //get the best move. so were checking all the possible moves, for each possible move. moveception.
-        let nextMove = getHighestRatedMove(getAllPossibleMoves());
-        //add that rating to an array of highest rates moves
-        possibleMoves[i].rating += nextMove.rating;
+    // TODO ne devrait pas connaitre ca (depend du jeu)
+    //whats the next shape to play
+    game.nextShape();
+    //for each possible move 
+    for (let i = 0; i < possibleMoves.length; i++) {
+      //get the best move. so were checking all the possible moves, for each possible move. moveception.
+      let nextMove = getHighestRatedMove(getAllPossibleMoves());
+      //add that rating to an array of highest rates moves
+      possibleMoves[i].rating += nextMove.rating;
+    }
+    //load current state
+    loadState(lastState);
+    //get the highest rated move ever
+    let move = getHighestRatedMove(possibleMoves);
+    //then rotate the shape as it says too
+    for (let rotations = 0; rotations < move.rotations; rotations++) {
+      game.rotateShape();
+    }
+    //and move left as it says
+    if (move.translation < 0) {
+      for (let lefts = 0; lefts < Math.abs(move.translation); lefts++) {
+        game.moveLeft();
       }
-      //load current state
-      loadState(lastState);
-      //get the highest rated move ever
-      let move = getHighestRatedMove(possibleMoves);
-      //then rotate the shape as it says too
-      for (let rotations = 0; rotations < move.rotations; rotations++) {
-        game.rotateShape();
-      }
-      //and move left as it says
-      if (move.translation < 0) {
-        for (let lefts = 0; lefts < Math.abs(move.translation); lefts++) {
-          game.moveLeft();
-        }
-        //and right as it says
-      } else if (move.translation > 0) {
-        for (let rights = 0; rights < move.translation; rights++) {
-          game.moveRight();
-        }
+      //and right as it says
+    } else if (move.translation > 0) {
+      for (let rights = 0; rights < move.translation; rights++) {
+        game.moveRight();
       }
     }
-  }
-
-  /**
-   * Returns the current game state in an object.
-   * @return {State} The current game state.
-   */
-  function getState() {
-    return {
-      grid: clone(game.grid()),
-      currentShape: clone(game.currentShape()),
-      upcomingShape: clone(game.upcomingShape() || 0),
-      bag: clone(game.bag()),
-      bagIndex: game.bagIndex(),
-      rndSeed,
-      score: game.score()
-    };
-  }
-
-  /**
-   * Loads the game state from the given state object.
-   * @param  {State} state The state to load.
-   */
-  function loadState(state) {
-    game.grid(clone(state.grid));
-    game.currentShape(clone(state.currentShape));
-    game.upcomingShape(clone(state.upcomingShape));
-    game.bag(clone(state.bag));
-    game.bagIndex(clone(state.bagIndex));
-    rndSeed = clone(state.rndSeed);
-    game.score(clone(state.score));
   }
 
   /**
    * Loads the archive given.
    * @param  {String} archiveString The stringified archive.
    */
-  function loadArchive(archiveString) {
+  const loadArchive = (archiveString) => {
     archive = JSON.parse(archiveString);
     genomes = clone(archive.genomes);
     populationSize = archive.populationSize;
@@ -364,9 +329,26 @@ const Brain = (config) => {
     console.log("Archive loaded!");
   }
 
+  // Called on load
+  const initialize = function () {
+    archive.populationSize = populationSize;
+
+    // Set both save state and current state from the game
+    roundState = getState();
+
+    // Create an initial population of genomes
+    createInitialPopulation();
+
+    // Select the first genome
+    evaluateNextGenome();
+  };
+
   return {
     initialize,
     evaluateNextGenome,
     makeNextMove,
+    getState,
+    loadState,
+    loadArchive,
   }
 };

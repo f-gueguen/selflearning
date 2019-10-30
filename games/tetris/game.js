@@ -135,8 +135,8 @@ const Game = (config = {}) => {
    * @return {Object} The results of the movement of the piece.
    */
   const moveDown = () => {
-    //array of possibilities
     let result = { lose: false, moved: true, rowsCleared: 0 };
+
     //remove the shape, because we will draw a new one
     removeShape();
     // move it down
@@ -256,7 +256,7 @@ const Game = (config = {}) => {
     //if almost at end of _bag
     if (_bagIndex === _bag.length - 1) {
       //generate upcoming shape
-      _upcomingShape = randomProperty(shapes);
+      _upcomingShape = Random.property(shapes);
     } else {
       //get the next shape from our _bag
       _upcomingShape = shapes[_bag[_bagIndex + 1]];
@@ -273,7 +273,7 @@ const Game = (config = {}) => {
    * Generates the _bag of shapes.
    */
   const generateBag = () => {
-    _bag = shuffleArray(Object.keys(shapes));
+    _bag = Random.shuffleArray(Object.keys(shapes));
     _bagIndex = 0;
   };
 
@@ -340,6 +340,10 @@ const Game = (config = {}) => {
     removeShape,
     nextShape,
     // interface
-    initialize
+    initialize,
+    // TODO ajouter ensemble de coups autorises?
+    moves: {
+
+    }
   };
 };
