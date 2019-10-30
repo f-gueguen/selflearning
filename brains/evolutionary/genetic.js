@@ -1,5 +1,7 @@
 "use strict";
 
+let genomeId = 0;
+
 const Brain = (config) => {
   const game = config.game;
   const evaluator = config.evaluator;
@@ -8,14 +10,14 @@ const Brain = (config) => {
   let rndSeed = randomBetween(0, 1000); // 1;
 
   //GAME VALUES
-  //for storing current state, we can load later
-  let saveState;
   //stores current game state
   let roundState;
   // percentage of fittest genomes to survive the generation
-  let ratioFittestToSurvive = 0.15;
+  let ratioFittestToSurvive = 0.1;
   // ratio of brand new genomes
   let ratioBrandNewGenomes = 0.1;
+  // ratio of children compared to single mutation
+  let ratioChildrenToSingle = 0.6;
 
   //GENETIC ALGORITHM VALUES
   //stores values for a generation
@@ -35,58 +37,10 @@ const Brain = (config) => {
     archive.populationSize = populationSize;
 
     // Set both save state and current state from the game
-    saveState = getState();
     roundState = getState();
 
     // Create an initial population of genomes
     createInitialPopulation();
-  };
-
-  function toggleAi() {
-    ai = !ai;
-  }
-
-  function speedUp() {
-    speedIndex = (speedIndex + 1) % speeds.length;
-    changeSpeed = true;
-  }
-  function speedDown() {
-    speedIndex = (speedIndex + speeds.length - 1) % speeds.length;
-    changeSpeed = true;
-  }
-
-  //key options
-  window.onkeydown = function (event) {
-    if (event.ctrlKey) {
-      loadJSON("./archive.json", loadArchive);
-      return false;
-    }
-
-    let characterPressed = String.fromCharCode(event.keyCode);
-    if (characterPressed.toUpperCase() === "Q") {
-      saveState = getState();
-    } else if (characterPressed.toUpperCase() === "W") {
-      loadState(saveState);
-    } else if (characterPressed.toUpperCase() === "D") {
-      speedDown();
-    } else if (characterPressed.toUpperCase() === "E") {
-      speedUp();
-    } else if (characterPressed.toUpperCase() === "A") {
-      //Turn on/off AI
-      toggleAi();
-    } else if (characterPressed.toUpperCase() === "R") {
-      //load saved generation values
-      loadArchive(prompt("Insert archive:"));
-    } else if (characterPressed.toUpperCase() === "G") {
-      if (localStorage.getItem("archive") === null) {
-        alert("No archive saved. Archives are saved after a generation has passed, and remain across sessions. Try again once a generation has passed");
-      } else {
-        prompt("Archive from last generation (including from last session):", localStorage.getItem("archive"));
-      }
-    } else if (!ai && game.onkeydown(event, characterPressed)) {
-      return true;
-    }
-    return false;
   };
 
   /**
@@ -103,24 +57,14 @@ const Brain = (config) => {
 
   function createRandomGenome() {
     //these are all weight values that are updated through evolution
-    return {
-      //unique identifier for a genome
-      id: Math.random(),
-      //The weight of each row cleared by the given move. the more rows that are cleared, the more this weight increases
-      rowsCleared: Math.random() - 0.5,
-      //the absolute height of the highest column to the power of 1.5
-      //added so that the algorithm can be able to detect if the blocks are stacking too high
-      weightedHeight: Math.random() - 0.5,
-      //The sum of all the column’s heights
-      cumulativeHeight: Math.random() - 0.5,
-      //the highest column minus the lowest column
-      relativeHeight: Math.random() - 0.5,
-      //the sum of all the empty cells that have a block above them (basically, cells that are unable to be filled)
-      holes: Math.random() * 0.5,
-      // the sum of absolute differences between the height of each column 
-      //(for example, if all the shapes on the grid lie completely flat, then the roughness would equal 0).
-      roughness: Math.random() - 0.5
+    const genome = {
+      id: genomeId++,
+      fitness: -1,
     };
+    Object.keys(evaluator).forEach(key => {
+      genome[key] = Math.random() - 0.5;
+    });
+    return genome;
   }
 
   /**
@@ -159,20 +103,10 @@ const Brain = (config) => {
     archive.elites.push(clone(genomes[0]));
     console.log("Elite's fitness: " + genomes[0].fitness);
 
-    //get a random index from genome array
-    const getRandomGenome = () =>
-      genomes[randomWeightedNumBetween(0, genomes.length - 1)];
+    // Keep first tier and a fourth of the remaining unfit
+    genomes = genomes.filter((_g, i) => i < (populationSize / 3) || !randomBetween(0, 4));
 
-    const removedGenomes = [];
-    //remove the tail end of genomes, focus mostly on the fittest
-    while (genomes.length > populationSize / 3) {
-      removedGenomes.push(genomes.pop());
-    }
-    // Keep 1/4 of those unfit genomes for diversity
-    const genomesToSave = removedGenomes.filter(() => !randomBetween(0, 4));
-    genomes.concat(genomesToSave);
-
-    //create children array
+    // Create new population
     let children = [];
     //add the x% fittest genome to array
     for (let i = 0; i < genomes.length * ratioFittestToSurvive; i++) {
@@ -187,20 +121,39 @@ const Brain = (config) => {
 
     // Fill population with mix of previous genomes
     while (children.length < populationSize) {
-      children.push(makeChild(getRandomGenome(), getRandomGenome()));
+      let genome = clone(getRandomGenome());
+      if (Math.random() < ratioChildrenToSingle) {
+        genome = makeChild(genome, getRandomGenome());
+        // Decrement because will be incremented again in mutateGenome
+        genomeId--;
+      }
+      mutateGenome(genome);
+      children.push(genome);
     }
-    //create new genome array
-    genomes = [];
-    //to store all the children in
-    genomes = genomes.concat(children);
-    //store this in our archive
+
+    // Populate genomes with children
+    genomes = [...children];
+    // Store this genomes set
     archive.genomes = clone(genomes);
-    //and set current gen
     archive.currentGeneration = clone(generation);
     console.log(JSON.stringify(archive));
     //store archive, thanks JS localstorage! (short term memory)
     localStorage.setItem("archive", JSON.stringify(archive));
   }
+
+  // Returns a random genome from the population
+  const getRandomGenome = () => genomes[randomWeightedNumBetween(0, genomes.length - 1)];
+
+  const mutateGenome = (genome) =>
+    Object.keys(genome).forEach(key => {
+      if (key === 'id') {
+        genome.id = genomeId++;
+      } else if (key !== 'fitness') {
+        if (Math.random() < mutationRate) {
+          genome[key] = genome[key] + mutationStep * (Math.random() * 2 - 1);
+        }
+      }
+    });
 
   /**
    * Creates a child genome from the given parent genomes, and then attempts to mutate the child genome.
@@ -208,41 +161,13 @@ const Brain = (config) => {
    * @param  {Genome} dad The second parent genome.
    * @return {Genome}     The child genome.
    */
-  function makeChild(mum, dad) {
-    //init the child given two genomes (its 7 parameters + initial fitness value)
-    let child = {
-      //unique id
-      id: Math.random(),
-      //all these params are randomly selected between the mom and dad genome
-      rowsCleared: randomChoice(mum.rowsCleared, dad.rowsCleared),
-      weightedHeight: randomChoice(mum.weightedHeight, dad.weightedHeight),
-      cumulativeHeight: randomChoice(mum.cumulativeHeight, dad.cumulativeHeight),
-      relativeHeight: randomChoice(mum.relativeHeight, dad.relativeHeight),
-      holes: randomChoice(mum.holes, dad.holes),
-      roughness: randomChoice(mum.roughness, dad.roughness),
-      //no fitness. yet.
-      fitness: -1
-    }
-
-    //we mutate each parameter using our mutationstep
-    if (Math.random() < mutationRate) {
-      child.rowsCleared = child.rowsCleared + mutationStep * (Math.random() * 2 - 1);
-    }
-    if (Math.random() < mutationRate) {
-      child.weightedHeight = child.weightedHeight + mutationStep * (Math.random() * 2 - 1);
-    }
-    if (Math.random() < mutationRate) {
-      child.cumulativeHeight = child.cumulativeHeight + mutationStep * (Math.random() * 2 - 1);
-    }
-    if (Math.random() < mutationRate) {
-      child.relativeHeight = child.relativeHeight + mutationStep * (Math.random() * 2 - 1);
-    }
-    if (Math.random() < mutationRate) {
-      child.holes = child.holes + mutationStep * (Math.random() * 2 - 1);
-    }
-    if (Math.random() < mutationRate) {
-      child.roughness = child.roughness + mutationStep * (Math.random() * 2 - 1);
-    }
+  const makeChild = (mum, dad) => {
+    const child = { id: genomeId++, fitness: -1 };
+    Object.keys(mum).forEach(key => {
+      if (!['fitness', 'id'].includes(key)) {
+        child[key] = randomChoice(mum[key], dad[key]);
+      }
+    });
     return child;
   }
 
@@ -286,23 +211,14 @@ const Brain = (config) => {
             moveDownResults = game.moveDown();
           }
           //set the 7 parameters of a genome
-          // TODO basculer sur l'evaluator
-          let algorithm = {
-            rowsCleared: moveDownResults.rowsCleared,
-            weightedHeight: Math.pow(evaluator.getHeight(game), 1.5),
-            cumulativeHeight: evaluator.getCumulativeHeight(game),
-            relativeHeight: evaluator.getRelativeHeight(game),
-            holes: evaluator.getHoles(game),
-            roughness: evaluator.getRoughness(game)
-          };
-          //rate each move
+          const algorithm = {};
           let rating = 0;
-          rating += algorithm.rowsCleared * genomes[currentGenome].rowsCleared;
-          rating += algorithm.weightedHeight * genomes[currentGenome].weightedHeight;
-          rating += algorithm.cumulativeHeight * genomes[currentGenome].cumulativeHeight;
-          rating += algorithm.relativeHeight * genomes[currentGenome].relativeHeight;
-          rating += algorithm.holes * genomes[currentGenome].holes;
-          rating += algorithm.roughness * genomes[currentGenome].roughness;
+          Object.keys(evaluator).forEach(key => {
+            const val = evaluator[key](game);
+            rating += val * genomes[currentGenome][key];
+            algorithm[key] = val;
+          });
+
           //if the move loses the game, lower its rating
           if (moveDownResults.lose) {
             rating -= 500;

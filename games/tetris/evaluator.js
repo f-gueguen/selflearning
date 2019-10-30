@@ -6,7 +6,7 @@ const Evaluator = (tetris) => {
    * Returns the cumulative height of all the columns.
    * @return {Number} The cumulative height.
    */
-  const getCumulativeHeight = () => {
+  const cumulativeHeight = () => {
     tetris.removeShape();
     const peaks = new Array(tetris.gameWidth).fill(tetris.gameHeight);
     for (let row = 0; row < tetris.grid().length; row++) {
@@ -28,7 +28,7 @@ const Evaluator = (tetris) => {
    * Returns the number of holes in the tetris.grid().
    * @return {Number} The number of holes.
    */
-  let getHoles = () => {
+  let holes = () => {
     tetris.removeShape();
     const peaks = new Array(tetris.gameWidth).fill(tetris.gameHeight);
     for (let row = 0; row < tetris.grid().length; row++) {
@@ -54,7 +54,7 @@ const Evaluator = (tetris) => {
    * Returns an array that replaces all the holes in the tetris.grid() with -1.
    * @return {Array} The modified tetris.grid() array.
    */
-  const getHolesArray = () => {
+  const holesArray = () => {
     const array = clone(tetris.grid());
     tetris.removeShape();
     const peaks = new Array(tetris.gameWidth).fill(tetris.gameHeight);
@@ -80,7 +80,7 @@ const Evaluator = (tetris) => {
    * Returns the roughness of the tetris.grid().
    * @return {Number} The roughness of the tetris.grid().
    */
-  const getRoughness = () => {
+  const roughness = () => {
     tetris.removeShape();
     let peaks = new Array(tetris.gameWidth).fill(tetris.gameHeight);
     for (let row = 0; row < tetris.grid().length; row++) {
@@ -104,7 +104,7 @@ const Evaluator = (tetris) => {
    * Returns the range of heights of the columns on the tetris.grid().
    * @return {Number} The relative height.
    */
-  const getRelativeHeight = () => {
+  const relativeHeight = () => {
     tetris.removeShape();
     const peaks = new Array(tetris.gameWidth).fill(tetris.gameHeight);
     for (let row = 0; row < tetris.grid().length; row++) {
@@ -115,14 +115,14 @@ const Evaluator = (tetris) => {
       }
     }
     tetris.applyShape();
-    return Math.max.apply(Math, peaks) - Math.min.apply(Math, peaks);
+    return Math.max(...peaks) - Math.min(...peaks);
   };
 
   /**
    * Returns the height of the biggest column on the tetris.grid().
    * @return {Number} The absolute height.
    */
-  const getHeight = () => {
+  const height = () => {
     tetris.removeShape();
     const peaks = new Array(tetris.gameWidth).fill(tetris.gameHeight);
     for (let row = 0; row < tetris.grid().length; row++) {
@@ -133,27 +133,15 @@ const Evaluator = (tetris) => {
       }
     }
     tetris.applyShape();
-    return tetris.gameHeight - Math.min.apply(Math, peaks);
-  };
-
-  const rating = () => {
-    return {
-      getCumulativeHeight: getCumulativeHeight(),
-      getHoles: getHoles(),
-      getHolesArray: getHolesArray(),
-      getRoughness: getRoughness(),
-      getRelativeHeight: getRelativeHeight(),
-      getHeight: getHeighteeeeee(),
-    }
+    return tetris.gameHeight - Math.min(...peaks);
   };
 
   return {
-    getCumulativeHeight,
-    getHoles,
-    getHolesArray,
-    getRoughness,
-    getRelativeHeight,
-    getHeight,
-    rating,
+    cumulativeHeight,
+    holes,
+    // holesArray,
+    roughness,
+    relativeHeight,
+    height,
   };
 };

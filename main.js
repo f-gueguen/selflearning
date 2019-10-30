@@ -11,8 +11,6 @@ let rndSeed = randomBetween(0, 1000); // 1;
 //GAME VALUES
 //for storing current state, we can load later
 let saveState;
-//stores current game state
-let roundState;
 //list of available game speeds
 let speeds = [512, 256, 128, 1, 0];
 //inded in game speed array
