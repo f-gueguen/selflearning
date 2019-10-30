@@ -5,19 +5,23 @@ let genomeId = 0;
 const Brain = (config) => {
   const game = config.game;
   const evaluator = config.evaluator;
+  // ratio of fittest genomes to survive the generation
+  const ratioFittestToSurvive = config.ratioFittestToSurvive || 0.1;
+  // ratio of brand new genomes
+  const ratioBrandNewGenomes = config.ratioBrandNewGenomes || 0.1;
+  // ratio of children compared to single mutation
+  const ratioChildrenToSingle = config.ratioChildrenToSingle || 0.6;
+  // rate of mutation
+  const mutationRate = config.mutationRate || 0.2;
+  // helps calculate mutation
+  const mutationStep = config.mutationStep || 0.1;
 
   // Used to help create a seeded generated random number for choosing shapes. makes results deterministic (reproducible) for debugging
-  let rndSeed = randomBetween(0, 1000); // 1;
+  let rndSeed = config.rndSeed || randomBetween(0, 1000); // 1;
 
   //GAME VALUES
   //stores current game state
   let roundState;
-  // percentage of fittest genomes to survive the generation
-  let ratioFittestToSurvive = 0.1;
-  // ratio of brand new genomes
-  let ratioBrandNewGenomes = 0.1;
-  // ratio of children compared to single mutation
-  let ratioChildrenToSingle = 0.6;
 
   //GENETIC ALGORITHM VALUES
   //stores values for a generation
@@ -27,10 +31,6 @@ const Brain = (config) => {
     elites: [],
     genomes: []
   };
-  //rate of mutation
-  let mutationRate = 0.05;
-  //helps calculate mutation
-  let mutationStep = 0.2;
 
   //main function, called on load
   let initialize = function () {
