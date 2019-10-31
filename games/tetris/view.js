@@ -50,15 +50,18 @@ const View = (game) => {
     if (ai) {
       html += "<br />Move: " + movesTaken + "/" + moveLimit;
       html += "<br />Generation: " + generation;
-      html += "<br />Individual: " + (currentGenome + 1) + "/" + populationSize;
-      html += "<br /><pre>" + JSON.stringify(genomes[currentGenome], null, 2) + "</pre>";
+      html += "<br />Individual: " + (genomeIndex + 1) + "/" + populationSize;
+      html += "<br /><pre>" + JSON.stringify(genomes[genomeIndex], null, 2) + "</pre>";
     }
     html = replaceAll(html, ",", "&nbsp;");
     scoreDetails.innerHTML = html;
   }
 
+  const initialize = () => {};
+
   return {
     displayGame,
     displayData,
+    initialize,
   };
 };

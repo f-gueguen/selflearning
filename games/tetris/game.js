@@ -121,7 +121,7 @@ const Game = (config = {}) => {
   /**
    * Moves the current shape to the right if possible.
    */
-  const moveRight = function () {
+  const moveRight = () => {
     removeShape();
     _currentShape.x++;
     if (collides(_grid, _currentShape)) {
@@ -283,7 +283,7 @@ const Game = (config = {}) => {
    * @param  {Shape} object The shape to check.
    * @return {Boolean} Whether the shape and _grid collide.
    */
-  const collides = function (scene, object) {
+  const collides = (scene, object) => {
     //for the size of the shape (row x column)
     for (let row = 0; row < object.shape.length; row++) {
       for (let col = 0; col < object.shape[row].length; col++) {
@@ -304,16 +304,18 @@ const Game = (config = {}) => {
   };
 
   // Rotate a shape
-  const rotate = function (matrix, times = 1) {
+  const rotate = (matrix, times = 1) => {
     for (let t = 0; t < times; t++) {
       matrix = transpose(matrix);
       // for the length of the matrix, reverse each column
-      for (let i = 0; i < matrix.length; i++) {
-        matrix[i].reverse();
-      }
+//      for (let i = 0; i < matrix.length; i++) {
+//        matrix[i].reverse();
+//      }
     }
     return matrix;
   };
+
+  const step = moveDown;
 
   const initialize = function () {
     reset();
@@ -341,6 +343,7 @@ const Game = (config = {}) => {
     nextShape,
     // interface
     initialize,
+    step,
     // TODO ajouter ensemble de coups autorises?
     moves: {
 

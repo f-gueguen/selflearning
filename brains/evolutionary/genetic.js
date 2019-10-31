@@ -60,11 +60,8 @@ const Brain = (config) => {
     game.score(clone(state.score));
   }
 
-  const createRandomGenome = () =>
-    Object.keys(evaluator).reduce((genome, key) => {
-      genome[key] = Math.random() - 0.5;
-      return genome;
-    }, { id: genomeId++, fitness: -1, });
+  // Depends on the game
+  const createRandomGenome = specializedBrain.createRandomGenome;
 
   /**
    * Creates the initial population of genomes, each with random genes.
@@ -83,7 +80,7 @@ const Brain = (config) => {
   const evolve = () => {
     console.log("Generation " + generation + " evaluated.");
 
-    currentGenome = 0;
+    genomeIndex = 0;
     generation++;
     reset();
     //gets the current game state
@@ -136,9 +133,9 @@ const Brain = (config) => {
    */
   const evaluateNextGenome = () => {
     //increment index in genome array
-    currentGenome++;
+    genomeIndex++;
     //If there is none, evolves the population.
-    if (currentGenome === genomes.length) {
+    if (genomeIndex === genomes.length) {
       evolve();
     }
     //load current gamestate
@@ -152,9 +149,9 @@ const Brain = (config) => {
     Object.keys(genome).forEach(key => {
       if (key === 'id') {
         genome.id = genomeId++;
-      } else if (key !== 'fitness') {
+      } else if (!['fitness', 'mutate'].includes(key)) {
         if (Math.random() < mutationRate) {
-          genome[key] = genome[key] + mutationStep * (Math.random() * 2 - 1);
+          genome[key] = evaluator.mutate(genome[key], mutationStep);
         }
       }
     });
@@ -168,7 +165,7 @@ const Brain = (config) => {
   const makeChild = (mum, dad) => {
     const child = { id: genomeId++, fitness: -1 };
     Object.keys(mum).forEach(key => {
-      if (!['fitness', 'id'].includes(key)) {
+      if (!['fitness', 'id', 'mutate'].includes(key)) {
         child[key] = Random.oneInSet(mum[key], dad[key]);
       }
     });
@@ -215,13 +212,17 @@ const Brain = (config) => {
           while (moveDownResults.moved) {
             moveDownResults = game.moveDown();
           }
-          //set the 7 parameters of a genome
+
+          // Set the genome algorithm
           const algorithm = {};
           let rating = 0;
           Object.keys(evaluator).forEach(key => {
-            const val = evaluator[key](game);
-            rating += val * genomes[currentGenome][key];
-            algorithm[key] = val;
+            // TODO fix
+            if (key !== 'mutate') {
+              const val = evaluator[key](game);
+              rating += val * genomes[genomeIndex][key];
+              algorithm[key] = val;
+            }
           });
 
           //if the move loses the game, lower its rating
@@ -274,9 +275,10 @@ const Brain = (config) => {
   /**
    * Makes a move, which is decided upon using the parameters in the current genome.
    */
+  // TODO extraire le traitement specifique a tetris
   function makeNextMove() {
     //update this genome's fitness value using the game score
-    genomes[currentGenome].fitness = game.score();
+    genomes[genomeIndex].fitness = game.score();
 
     //get all the possible moves
     let possibleMoves = getAllPossibleMoves();
@@ -323,7 +325,7 @@ const Brain = (config) => {
     genomes = clone(archive.genomes);
     populationSize = archive.populationSize;
     generation = archive.currentGeneration;
-    currentGenome = 0;
+    genomeIndex = 0;
     reset();
     roundState = getState();
     console.log("Archive loaded!");

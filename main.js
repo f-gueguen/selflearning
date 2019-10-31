@@ -3,6 +3,7 @@
 let game = Game({ gameHeight: 15, gameWidth: 10 });
 let evaluator = Evaluator(game);
 let view = View(game);
+let specializedBrain = SpecializedBrain(game, evaluator);
 let brain = Brain({ game, evaluator });
 
 // Used to help create a seeded generated random number for choosing shapes. makes results deterministic (reproducible) for debugging
@@ -11,31 +12,32 @@ let rndSeed = Random.numberBetween(0, 1000); // 1;
 //GAME VALUES
 //for storing current state, we can load later
 let saveState;
-//list of available game speeds
+
+// Game speed
 let speeds = [512, 256, 128, 1, 0, 2048];
 let speedIndex = 0;
+const speedUp = () => speedIndex = ++speedIndex % speeds.length;
+const speedDown = () => speedIndex = (--speedIndex + speeds.length) % speeds.length;
 
-// Is AI enabled?
-let ai = true;
 
 // Current move
 let movesTaken = 0;
-let moveLimit = 2000;
+let moveLimit = 20000;
 
 
 // TODO deplacer dans brain et afficher les stats par le brain
 //stores genomes
 let genomes = [];
+let genomeIndex = -1;
 //generation number
 let generation = 0;
-//index of current genome in genomes array
-let currentGenome = -1;
-//stores number of genomes, init at 50 
+// Size of solution population to train
 let populationSize = 50;
 
+// Is AI enabled?
+let ai = true;
 const toggleAi = () => ai = !ai;
-const speedUp = () => speedIndex = (speedIndex + 1) % speeds.length;
-const speedDown = () => speedIndex = (speedIndex + speeds.length - 1) % speeds.length;
+
 
 //key options
 window.onkeydown = function (event) {
@@ -86,6 +88,7 @@ window.onkeydown = function (event) {
       }
     }
   }
+  // Stops propagation
   return false;
 };
 
@@ -94,13 +97,14 @@ window.onkeydown = function (event) {
  */
 function update() {
   /*
+  TODO
   algo devrait etre:
   - appliquer coup suivant et moveTaken++
   - si perdu, genome suivant et moveTaken = 0
   */
 
-  //move the shape down
-  let results = game.moveDown();
+  // Execute next game step (e.g. tetris would be move down)
+  const results = game.step();
 
   if (ai) {
     if (movesTaken > moveLimit || results.lose) {
@@ -115,7 +119,7 @@ function update() {
   speeds[speedIndex] !== 0 && view.displayGame();
   // Refresh the score and stats view
   view.displayData();
-}
+};
 
 /**
  * Resets the game.
@@ -128,11 +132,12 @@ function reset() {
 // main function, called on load
 let initialize = function () {
   game.initialize();
+  view.initialize();
   brain.initialize();
 
-  //the game loop
+  // Game main loop
   const loop = function () {
-    //updates the game (update fitness, make a move, evaluate next move)
+    // Play next game move, evaluate...
     update();
     setTimeout(loop, speeds[speedIndex]);
   };
