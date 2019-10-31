@@ -12,14 +12,14 @@ let rndSeed = Random.numberBetween(0, 1000); // 1;
 //for storing current state, we can load later
 let saveState;
 //list of available game speeds
-let speeds = [512, 256, 128, 1, 0];
-//inded in game speed array
+let speeds = [512, 256, 128, 1, 0, 2048];
 let speedIndex = 0;
-//turn ai on or off
+
+// Is AI enabled?
 let ai = true;
-//how many so far?
+
+// Current move
 let movesTaken = 0;
-//max number of moves allowed in a generation
 let moveLimit = 2000;
 
 
@@ -33,16 +33,9 @@ let currentGenome = -1;
 //stores number of genomes, init at 50 
 let populationSize = 50;
 
-function toggleAi() {
-  ai = !ai;
-}
-
-function speedUp() {
-  speedIndex = (speedIndex + 1) % speeds.length;
-}
-function speedDown() {
-  speedIndex = (speedIndex + speeds.length - 1) % speeds.length;
-}
+const toggleAi = () => ai = !ai;
+const speedUp = () => speedIndex = (speedIndex + 1) % speeds.length;
+const speedDown = () => speedIndex = (speedIndex + speeds.length - 1) % speeds.length;
 
 //key options
 window.onkeydown = function (event) {
@@ -51,29 +44,47 @@ window.onkeydown = function (event) {
     return false;
   }
 
-  let characterPressed = String.fromCharCode(event.keyCode);
-  if (characterPressed.toUpperCase() === "Q") {
-    saveState = brain.getState();
-  } else if (characterPressed.toUpperCase() === "W") {
-    brain.loadState(saveState);
-  } else if (characterPressed.toUpperCase() === "D") {
-    speedDown();
-  } else if (characterPressed.toUpperCase() === "E") {
-    speedUp();
-  } else if (characterPressed.toUpperCase() === "A") {
-    //Turn on/off AI
-    toggleAi();
-  } else if (characterPressed.toUpperCase() === "R") {
-    //load saved generation values
-    brain.loadArchive(prompt("Insert archive:"));
-  } else if (characterPressed.toUpperCase() === "G") {
-    if (localStorage.getItem("archive") === null) {
-      alert("No archive saved. Archives are saved after a generation has passed, and remain across sessions. Try again once a generation has passed");
-    } else {
-      prompt("Archive from last generation (including from last session):", localStorage.getItem("archive"));
+  const characterPressed = String.fromCharCode(event.keyCode);
+
+  switch (characterPressed.toUpperCase()) {
+    case 'Q': {
+      saveState = brain.getState();
+      break;
     }
-  } else if (!ai && game.onkeydown(event, characterPressed)) {
-    return true;
+    case 'W': {
+      brain.loadState(saveState);
+      break;
+    }
+    case 'D': {
+      speedDown();
+      break;
+    }
+    case 'E': {
+      speedUp();
+      break;
+    }
+    case 'A': {
+      toggleAi();
+      break;
+    }
+    case 'R': {
+      //load saved generation values
+      brain.loadArchive(prompt("Insert archive:"));
+      break;
+    }
+    case 'G': {
+      if (localStorage.getItem("archive") === null) {
+        alert("No archive saved. Archives are saved after a generation has passed, and remain across sessions. Try again once a generation has passed");
+      } else {
+        prompt("Archive from last generation (including from last session):", localStorage.getItem("archive"));
+      }
+      break;
+    }
+    default: {
+      if (!ai) {
+        game.control(event, characterPressed);
+      }
+    }
   }
   return false;
 };

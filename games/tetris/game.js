@@ -87,7 +87,7 @@ const Game = (config = {}) => {
     }
   };
 
-  const onkeydown = function (event, characterPressed) {
+  const control = (event, characterPressed) => {
     if (event.keyCode === 38) {
       rotateShape();
     } else if (event.keyCode === 40) {
@@ -330,7 +330,7 @@ const Game = (config = {}) => {
     bag,
     bagIndex,
     reset,
-    onkeydown,
+    control,
     moveLeft,
     moveRight,
     moveDown,
