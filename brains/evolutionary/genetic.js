@@ -8,9 +8,9 @@ const Brain = (config) => {
   // ratio of fittest genomes to survive the generation
   const ratioFittestToSurvive = config.ratioFittestToSurvive || 0.1;
   // ratio of brand new genomes
-  const ratioBrandNewGenomes = config.ratioBrandNewGenomes || 0.1;
+  const ratioBrandNewGenomes = config.ratioBrandNewGenomes || 0.05;
   // ratio of children compared to single mutation
-  const ratioChildrenToSingle = config.ratioChildrenToSingle || 0.6;
+  const ratioChildrenToSingle = config.ratioChildrenToSingle || 0.7;
   // rate of mutation
   const mutationRate = config.mutationRate || 0.2;
   // helps calculate mutation
