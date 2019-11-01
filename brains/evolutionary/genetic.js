@@ -87,7 +87,7 @@ const Brain = (config = {}) => {
     generation++;
     reset();
     //gets the current game state
-    roundState = getState();
+    roundState = specializedBrain.getState();
     // Sort genomes from fittest to weakest
     genomes.sort((a, b) => b.fitness - a.fitness);
     // Save a copy of the fittest genome to the elites list
@@ -144,7 +144,7 @@ const Brain = (config = {}) => {
       evolve();
     }
     // Load current gamestate
-    loadState(roundState);
+    specializedBrain.loadState(roundState);
   }
 
   /**
@@ -153,7 +153,7 @@ const Brain = (config = {}) => {
    */
   // TODO extraire dans game
   function getAllPossibleMoves() {
-    let lastState = getState();
+    let lastState = specializedBrain.getState();
     const possibleMoves = [];
 
     //for each possible rotation
@@ -163,7 +163,7 @@ const Brain = (config = {}) => {
       const transitionLimit = Math.ceil(game.gameWidth / 2);
       //for each iteration
       for (let translation = -transitionLimit; translation <= game.gameWidth - transitionLimit; translation++) {
-        loadState(lastState);
+        specializedBrain.loadState(lastState);
         //rotate shape
         for (let j = 0; j < rotations; j++) {
           game.rotateShape();
@@ -209,7 +209,7 @@ const Brain = (config = {}) => {
       }
     }
     //get last state
-    loadState(lastState);
+    specializedBrain.loadState(lastState);
     //return array of all possible moves
     return possibleMoves;
   }
@@ -255,7 +255,7 @@ const Brain = (config = {}) => {
     //get all the possible moves
     let possibleMoves = getAllPossibleMoves();
     //lets store the current state since we will update it
-    let lastState = getState();
+    let lastState = specializedBrain.getState();
 
     // TODO ne devrait pas connaitre ca (depend du jeu)
     //whats the next shape to play
@@ -268,7 +268,7 @@ const Brain = (config = {}) => {
       possibleMoves[i].rating += nextMove.rating;
     }
     //load current state
-    loadState(lastState);
+    specializedBrain.loadState(lastState);
     //get the highest rated move ever
     let move = getHighestRatedMove(possibleMoves);
     //then rotate the shape as it says too
@@ -299,7 +299,7 @@ const Brain = (config = {}) => {
     generation = archive.currentGeneration;
     genomeIndex = 0;
     reset();
-    roundState = getState();
+    roundState = specializedBrain.getState();
     console.log("Archive loaded!");
   }
 
@@ -308,7 +308,7 @@ const Brain = (config = {}) => {
     archive.populationSize = populationSize;
 
     // Set both save state and current state from the game
-    roundState = getState();
+    roundState = specializedBrain.getState();
 
     // Create an initial population of genomes
     createInitialPopulation();
@@ -323,8 +323,6 @@ const Brain = (config = {}) => {
     initialize,
     evaluateNextGenome,
     makeNextMove,
-    getState,
-    loadState,
     loadArchive,
     getConfig,
   }

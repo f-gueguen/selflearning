@@ -50,11 +50,11 @@ window.onkeydown = function (event) {
 
   switch (characterPressed.toUpperCase()) {
     case 'Q': {
-      saveState = brain.getState();
+      saveState = specializedBrain.getState();
       break;
     }
     case 'W': {
-      brain.loadState(saveState);
+      specializedBrain.loadState(saveState);
       break;
     }
     case 'D': {

@@ -44,8 +44,38 @@ const SpecializedBrain = (game, evaluator, config) => {
     return child;
   }
 
+  /**
+   * Returns the current game state in an object.
+   * @return {State} The current game state.
+   */
+  const getState = () => clone({
+    grid: game.grid(),
+    currentShape: game.currentShape(),
+    upcomingShape: game.upcomingShape() || 0,
+    bag: game.bag(),
+    bagIndex: game.bagIndex(),
+    rndSeed,
+    score: game.score()
+  });
+
+  /**
+   * Loads the game state from the given state object.
+   * @param  {State} state The state to load.
+   */
+  const loadState = (state) => {
+    game.grid(clone(state.grid));
+    game.currentShape(clone(state.currentShape));
+    game.upcomingShape(clone(state.upcomingShape));
+    game.bag(clone(state.bag));
+    game.bagIndex(clone(state.bagIndex));
+    rndSeed = clone(state.rndSeed);
+    game.score(clone(state.score));
+  }
+
   return {
     newRandomGenome,
     newGenome,
+    getState,
+    loadState,
   }
 };

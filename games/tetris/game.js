@@ -135,7 +135,7 @@ const Game = (config = {}) => {
    * @return {Object} The results of the movement of the piece.
    */
   const moveDown = () => {
-    let result = { end: false, moved: true, rowsCleared: 0 };
+    let result = { end: false, moved: true };
 
     //remove the shape, because we will draw a new one
     removeShape();
@@ -150,7 +150,7 @@ const Game = (config = {}) => {
       // Move on to the next shape in the _bag
       nextShape();
       // Clear rows if needed
-      result.rowsCleared = clearRows();
+      clearRows();
 
       // If the new shape collides, we lose
       if (collides(_grid, _currentShape)) {
@@ -195,8 +195,6 @@ const Game = (config = {}) => {
     // Add score depending on number of rows cleared
     _score += clearRowScore[rowsToClear.length];
 
-    //new array for cleared rows
-    let rowsCleared = clone(rowsToClear.length);
     //for each value
     for (let toClear = rowsToClear.length - 1; toClear >= 0; toClear--) {
       //remove the row from the _grid
@@ -206,8 +204,6 @@ const Game = (config = {}) => {
     while (_grid.length < gameHeight) {
       _grid.unshift(new Array(gameWidth).fill(0));
     }
-    //return the rows cleared
-    return rowsCleared;
   };
 
   /**
