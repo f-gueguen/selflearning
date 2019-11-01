@@ -2,19 +2,19 @@
 
 let genomeId = 0;
 
-const Brain = (config) => {
+const Brain = (config = {}) => {
   const game = config.game;
   const evaluator = config.evaluator;
   // ratio of fittest genomes to survive the generation
-  const ratioFittestToSurvive = config.ratioFittestToSurvive || 0.1;
+  config.ratioFittestToSurvive = config.ratioFittestToSurvive || 0.1;
   // ratio of brand new genomes
-  const ratioBrandNewGenomes = config.ratioBrandNewGenomes || 0.05;
-  // ratio of children compared to single mutation
-  const ratioChildrenToSingle = config.ratioChildrenToSingle || 0.7;
+  config.ratioBrandNewGenomes = config.ratioBrandNewGenomes || 0.05;
+  // ratio of newGenomes compared to single mutation
+  config.ratioChildrenToSingle = config.ratioChildrenToSingle || 0.7;
   // rate of mutation
-  const mutationRate = config.mutationRate || 0.2;
+  config.mutationRate = config.mutationRate || 0.4;
   // helps calculate mutation
-  const mutationStep = config.mutationStep || 0.1;
+  config.mutationStep = config.mutationStep || 0.1;
 
   // Used to help create a seeded generated random number for choosing shapes. makes results deterministic (reproducible) for debugging
   let rndSeed = config.rndSeed || Random.numberBetween(0, 1000); // 1;
@@ -60,13 +60,20 @@ const Brain = (config) => {
     game.score(clone(state.score));
   }
 
+  const newRandomGenome = () => {
+    const genome = specializedBrain.newRandomGenome();
+    genome.id = genomeId++;
+    genome.fitness = -1;
+    return genome;
+  }
+
   /**
    * Creates the initial population of genomes, each with random genes.
    */
   const createInitialPopulation = () => {
     genomes = [];
     for (let i = 0; i < populationSize; i++) {
-      const genome = specializedBrain.createRandomGenome();
+      const genome = newRandomGenome();
       genomes.push(genome);
     }
   }
@@ -88,44 +95,38 @@ const Brain = (config) => {
 
     // Log last generation data
     console.log("Generation " + generation + " evaluated.");
-    console.log("Elite's fitness: " + genomes[0].fitness);
-    console.log("Weakest's fitness: " + genomes[genomes.length - 1].fitness);
+    console.log("Elite's id & fitness: #" + genomes[0].id + " - " + genomes[0].fitness);
     console.log("Average fitness: " + genomes.reduce((sum, g) => sum = sum + g.fitness, 0) / genomes.length);
+
+    // Create new population
+    let newGenomes = [];
+    // Transmit the x% fittest genome to the new generation
+    for (let i = 0; i < genomes.length * config.ratioFittestToSurvive; i++) {
+      newGenomes.push(clone(genomes[i]));
+    }
 
     // Keep best third and a fourth of the remaining unfit to generate next generation
     genomes = genomes.filter((_g, i) => (i < (populationSize / 3)) || !Random.numberBetween(0, 4));
 
-    // Create new population
-    let children = [];
-    //add the x% fittest genome to array
-    for (let i = 0; i < genomes.length * ratioFittestToSurvive; i++) {
-      children.push(clone(genomes[i]));
-    }
-
     // Add brand new genomes for diversity
-    for (let i = 0; i < genomes.length * ratioBrandNewGenomes; i++) {
-      const genome = specializedBrain.createRandomGenome();
-      children.push(genome);
+    for (let i = 0; i < genomes.length * config.ratioBrandNewGenomes; i++) {
+      const genome = specializedBrain.newRandomGenome();
+      newGenomes.push(genome);
     }
 
-    // Fill population with mix of previous genomes
-    while (children.length < populationSize) {
-      let genome = Random.weightedArrayElement(genomes);
-      if (Math.random() < ratioChildrenToSingle) {
-        genome = makeChild(genome, Random.weightedArrayElement(genomes));
-        // Decrement because will be incremented again in mutateGenome
-        genomeId--;
-      }
-      mutateGenome(genome);
-      children.push(genome);
+    // Fill population with mix and / or mutations of previous genomes
+    while (newGenomes.length < populationSize) {
+      const genome = specializedBrain.newGenome(genomes);
+      genome.id = genomeId++;
+      newGenomes.push(genome);
     }
 
-    // Initialize children fitnerss for next occurence
+    // Initialize newGenomes fitness for next occurence
     // Should it have a memory of previous performances?
-    children.forEach(c => c.fitness = -1);
+    newGenomes.forEach(c => c.fitness = -1);
 
-    // Populate genomes with children
-    genomes = [...children];
+    // Populate genomes with newGenomes
+    genomes = [...newGenomes];
 
     // Store this genomes set
     archive.genomes = clone(genomes);
@@ -137,41 +138,13 @@ const Brain = (config) => {
    * Evaluates the next genome in the population. If there is none, evolves the population.
    */
   const evaluateNextGenome = () => {
-    //increment index in genome array
     genomeIndex++;
-    //If there is none, evolves the population.
+    // If reached the last one, evolves the genomes population
     if (genomeIndex >= genomes.length) {
       evolve();
     }
-    //load current gamestate
+    // Load current gamestate
     loadState(roundState);
-  }
-
-  const mutateGenome = (genome) =>
-    Object.keys(genome).forEach(key => {
-      if (key === 'id') {
-        genome.id = genomeId++;
-      } else if (key !== 'fitness') {
-        if (Math.random() < mutationRate) {
-          genome[key] = specializedBrain.mutate(genome[key], mutationStep);
-        }
-      }
-    });
-
-  /**
-   * Creates a child genome from the given parent genomes, and then attempts to mutate the child genome.
-   * @param  {Genome} mum The first parent genome.
-   * @param  {Genome} dad The second parent genome.
-   * @return {Genome}     The child genome.
-   */
-  const makeChild = (mum, dad) => {
-    const child = { id: genomeId++, fitness: -1 };
-    Object.keys(mum).forEach(key => {
-      if (!['fitness', 'id'].includes(key)) {
-        child[key] = Random.oneInSet(mum[key], dad[key]);
-      }
-    });
-    return child;
   }
 
   /**
@@ -344,6 +317,8 @@ const Brain = (config) => {
     evaluateNextGenome();
   };
 
+  const getConfig = () => config;
+
   return {
     initialize,
     evaluateNextGenome,
@@ -351,5 +326,6 @@ const Brain = (config) => {
     getState,
     loadState,
     loadArchive,
+    getConfig,
   }
 };

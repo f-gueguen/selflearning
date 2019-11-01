@@ -135,7 +135,7 @@ const Game = (config = {}) => {
    * @return {Object} The results of the movement of the piece.
    */
   const moveDown = () => {
-    let result = { lose: false, moved: true, rowsCleared: 0 };
+    let result = { end: false, moved: true, rowsCleared: 0 };
 
     //remove the shape, because we will draw a new one
     removeShape();
@@ -154,7 +154,7 @@ const Game = (config = {}) => {
 
       // If the new shape collides, we lose
       if (collides(_grid, _currentShape)) {
-        result.lose = true;
+        result.end = true;
         reset();
       }
       result.moved = false;

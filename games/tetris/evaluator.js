@@ -136,9 +136,6 @@ const Evaluator = (game) => {
     return game.gameHeight - Math.min(...peaks);
   };
 
-  // TODO extraire dans une classe dediee a la genetique?
-  const mutate = (param, step) => param + step * (Math.random() * 2 - 1);
-
   return {
     cumulativeHeight,
     holes,
@@ -146,6 +143,5 @@ const Evaluator = (game) => {
     roughness,
     relativeHeight,
     height,
-    mutate,
   };
 };

@@ -3,8 +3,8 @@
 let game = Game({ gameHeight: 15, gameWidth: 10 });
 let evaluator = Evaluator(game);
 let view = View(game);
-let specializedBrain = SpecializedBrain(game, evaluator);
 let brain = Brain({ game, evaluator });
+let specializedBrain = SpecializedBrain(game, evaluator, brain.getConfig());
 
 // Used to help create a seeded generated random number for choosing shapes. makes results deterministic (reproducible) for debugging
 let rndSeed = Random.numberBetween(0, 1000); // 1;
@@ -39,7 +39,7 @@ let ai = true;
 const toggleAi = () => ai = !ai;
 
 
-//key options
+// Key control
 window.onkeydown = function (event) {
   if (event.ctrlKey) {
     loadJSON("./archive.json", brain.loadArchive);
