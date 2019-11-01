@@ -5,6 +5,7 @@ let evaluator = Evaluator(game);
 let view = View(game);
 let brain = Brain({ game, evaluator });
 let specializedBrain = SpecializedBrain(game, evaluator, brain.getConfig());
+const archiveName = "archive_" + Random.numberBetween(0, 5000);
 
 // Used to help create a seeded generated random number for choosing shapes. makes results deterministic (reproducible) for debugging
 let rndSeed = Random.numberBetween(0, 1000); // 1;
@@ -42,7 +43,7 @@ const toggleAi = () => ai = !ai;
 // Key control
 window.onkeydown = function (event) {
   if (event.ctrlKey) {
-    loadJSON("./archive.json", brain.loadArchive);
+    loadJSON("./" + archiveName + ".json", brain.loadArchive);
     return false;
   }
 
@@ -75,10 +76,10 @@ window.onkeydown = function (event) {
       break;
     }
     case 'G': {
-      if (localStorage.getItem("archive") === null) {
+      if (localStorage.getItem(archiveName) === null) {
         alert("No archive saved. Archives are saved after a generation has passed, and remain across sessions. Try again once a generation has passed");
       } else {
-        prompt("Archive from last generation (including from last session):", localStorage.getItem("archive"));
+        prompt("Archive from last generation (including from last session):", localStorage.getItem(archiveName));
       }
       break;
     }
