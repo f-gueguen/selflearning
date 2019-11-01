@@ -60,16 +60,13 @@ const Brain = (config) => {
     game.score(clone(state.score));
   }
 
-  // Depends on the game
-  const createRandomGenome = specializedBrain.createRandomGenome;
-
   /**
    * Creates the initial population of genomes, each with random genes.
    */
   const createInitialPopulation = () => {
     genomes = [];
     for (let i = 0; i < populationSize; i++) {
-      const genome = createRandomGenome();
+      const genome = specializedBrain.createRandomGenome();
       genomes.push(genome);
     }
   }
@@ -78,21 +75,25 @@ const Brain = (config) => {
    * Evolves the entire population and goes to the next generation.
    */
   const evolve = () => {
-    console.log("Generation " + generation + " evaluated.");
 
     genomeIndex = 0;
     generation++;
     reset();
     //gets the current game state
     roundState = getState();
-    //sorts genomes in decreasing order of fitness values
-    genomes.sort((a, b) => (b.fitness - a.fitness));
-    //add a copy of the fittest genome to the elites list
+    // Sort genomes from fittest to weakest
+    genomes.sort((a, b) => b.fitness - a.fitness);
+    // Save a copy of the fittest genome to the elites list
     archive.elites.push(clone(genomes[0]));
-    console.log("Elite's fitness: " + genomes[0].fitness);
 
-    // Keep first tier and a fourth of the remaining unfit
-    genomes = genomes.filter((_g, i) => i < (populationSize / 3) || !Random.numberBetween(0, 4));
+    // Log last generation data
+    console.log("Generation " + generation + " evaluated.");
+    console.log("Elite's fitness: " + genomes[0].fitness);
+    console.log("Weakest's fitness: " + genomes[genomes.length - 1].fitness);
+    console.log("Average fitness: " + genomes.reduce((sum, g) => sum = sum + g.fitness, 0) / genomes.length);
+
+    // Keep best third and a fourth of the remaining unfit to generate next generation
+    genomes = genomes.filter((_g, i) => (i < (populationSize / 3)) || !Random.numberBetween(0, 4));
 
     // Create new population
     let children = [];
@@ -101,17 +102,17 @@ const Brain = (config) => {
       children.push(clone(genomes[i]));
     }
 
-    // add brand new genomes for diversity
+    // Add brand new genomes for diversity
     for (let i = 0; i < genomes.length * ratioBrandNewGenomes; i++) {
-      const genome = createRandomGenome();
+      const genome = specializedBrain.createRandomGenome();
       children.push(genome);
     }
 
     // Fill population with mix of previous genomes
     while (children.length < populationSize) {
-      let genome = clone(getRandomGenome());
+      let genome = Random.weightedArrayElement(genomes);
       if (Math.random() < ratioChildrenToSingle) {
-        genome = makeChild(genome, getRandomGenome());
+        genome = makeChild(genome, Random.weightedArrayElement(genomes));
         // Decrement because will be incremented again in mutateGenome
         genomeId--;
       }
@@ -119,12 +120,16 @@ const Brain = (config) => {
       children.push(genome);
     }
 
+    // Initialize children fitnerss for next occurence
+    // Should it have a memory of previous performances?
+    children.forEach(c => c.fitness = -1);
+
     // Populate genomes with children
     genomes = [...children];
+
     // Store this genomes set
     archive.genomes = clone(genomes);
-    archive.currentGeneration = clone(generation);
-    console.log(JSON.stringify(archive));
+    archive.currentGeneration = generation;
     localStorage.setItem("archive", JSON.stringify(archive));
   }
 
@@ -135,23 +140,20 @@ const Brain = (config) => {
     //increment index in genome array
     genomeIndex++;
     //If there is none, evolves the population.
-    if (genomeIndex === genomes.length) {
+    if (genomeIndex >= genomes.length) {
       evolve();
     }
     //load current gamestate
     loadState(roundState);
   }
 
-  // Returns a random genome from the population
-  const getRandomGenome = () => genomes[Random.weightedNumBetween(0, genomes.length - 1)];
-
   const mutateGenome = (genome) =>
     Object.keys(genome).forEach(key => {
       if (key === 'id') {
         genome.id = genomeId++;
-      } else if (!['fitness', 'mutate'].includes(key)) {
+      } else if (key !== 'fitness') {
         if (Math.random() < mutationRate) {
-          genome[key] = evaluator.mutate(genome[key], mutationStep);
+          genome[key] = specializedBrain.mutate(genome[key], mutationStep);
         }
       }
     });
@@ -165,7 +167,7 @@ const Brain = (config) => {
   const makeChild = (mum, dad) => {
     const child = { id: genomeId++, fitness: -1 };
     Object.keys(mum).forEach(key => {
-      if (!['fitness', 'id', 'mutate'].includes(key)) {
+      if (!['fitness', 'id'].includes(key)) {
         child[key] = Random.oneInSet(mum[key], dad[key]);
       }
     });
@@ -217,16 +219,13 @@ const Brain = (config) => {
           const algorithm = {};
           let rating = 0;
           Object.keys(evaluator).forEach(key => {
-            // TODO fix
-            if (key !== 'mutate') {
-              const val = evaluator[key](game);
-              rating += val * genomes[genomeIndex][key];
-              algorithm[key] = val;
-            }
+            const val = evaluator[key](game);
+            rating += val * genomes[genomeIndex][key];
+            algorithm[key] = val;
           });
 
-          //if the move loses the game, lower its rating
-          if (moveDownResults.lose) {
+          // If lost, lower the rating (the only way to end tetris is by losing)
+          if (moveDownResults.end) {
             rating -= 500;
           }
           //push all possible moves, with their associated ratings and parameter values to an array

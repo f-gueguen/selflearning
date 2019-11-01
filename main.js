@@ -107,7 +107,7 @@ function update() {
   const results = game.step();
 
   if (ai) {
-    if (movesTaken > moveLimit || results.lose) {
+    if (movesTaken > moveLimit || results.end) {
       brain.evaluateNextGenome();
       movesTaken = 0;
     } else if (!results.moved) {
