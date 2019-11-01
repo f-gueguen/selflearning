@@ -52,7 +52,7 @@ SVG.path = (points, command = SVG.lineCommand, color = '#000') => {
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Basic_Shapes
 SVG.circle = (x, y, radius, strokeWidth, color = '#000', fillColor = 'transparent') =>
   `<circle cx="${x}" cy="${y}" r="${radius}" stroke="${color}" fill="${fillColor}" stroke-width="${strokeWidth}"/>`;
-SVG.dot = (x, y, radius, color = '#000') => circle(x, y, radius, 1, color, color);
+SVG.dot = (x, y, radius, color = '#000') => SVG.circle(x, y, radius, 1, color, color);
 SVG.polygone = (points, color = '#000') => {
   const coordinates = points.reduce((acc, p) => { acc = `${acc} ${p.x},${p.y}`}, '');
   return `<path d="${coordinates}" fill="none" stroke="${color}" />`;
