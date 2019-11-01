@@ -101,7 +101,7 @@ function update() {
   TODO
   algo devrait etre:
   - appliquer coup suivant et moveTaken++
-  - si perdu, genome suivant et moveTaken = 0
+  - si fini, genome suivant et moveTaken = 0
   */
 
   // Execute next game step (e.g. tetris would be move down)
@@ -112,6 +112,8 @@ function update() {
       brain.evaluateNextGenome();
       movesTaken = 0;
     } else if (!results.moved) {
+      // TODO voyageur de commerce ne passe jamais ici
+      // reparer moveDown dans tetris et separer la logique du brain
       brain.makeNextMove();
       movesTaken++;
     }
