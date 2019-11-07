@@ -2,7 +2,8 @@
 
 const Random = {};
 
-Random.numberBetween = (min, max) => ~~(Math.random() * (max - min + 1)) + min;
+Random.floatNumberBetween = (min, max) => Math.random() * (max - min + 1) + min;
+Random.intNumberBetween = (min, max) => ~~(Math.random() * (max - min + 1)) + min;
 
 /**
 * Returns a random property from the given object.
@@ -18,15 +19,15 @@ Random.property = (obj) => obj[Random.key(obj)];
  */
 Random.key = (obj) => {
   const keys = Object.keys(obj);
-  const i = Random.numberBetween(0, keys.length - 1); // this.seeded can be used for deterministic outcome
+  const i = Random.intNumberBetween(0, keys.length - 1); // this.seeded can be used for deterministic outcome
 
   return keys[i];
 };
 
-Random.arrayElement = arr => arr[Random.numberBetween(0, arr.length - 1)];
+Random.arrayElement = arr => arr[Random.intNumberBetween(0, arr.length - 1)];
 Random.weightedIndex = arr => {
   const arrayWeight = arr.length * (arr.length - 1) / 2;
-  let weightedIndex = Random.numberBetween(0, arrayWeight);
+  let weightedIndex = Random.intNumberBetween(0, arrayWeight);
   for (let i = arr.length; weightedIndex >= i; i--) {
     weightedIndex = weightedIndex - i;
   }

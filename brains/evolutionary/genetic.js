@@ -17,7 +17,7 @@ const Brain = (config = {}) => {
   config.mutationStep = config.mutationStep || 0.1;
 
   // Used to help create a seeded generated random number for choosing shapes. makes results deterministic (reproducible) for debugging
-  let rndSeed = config.rndSeed || Random.numberBetween(0, 1000); // 1;
+  let rndSeed = config.rndSeed || Random.intNumberBetween(0, 1000); // 1;
 
   //GAME VALUES
   //stores current game state
@@ -31,34 +31,6 @@ const Brain = (config = {}) => {
     elites: [],
     genomes: []
   };
-
-  /**
-   * Returns the current game state in an object.
-   * @return {State} The current game state.
-   */
-  const getState = () => clone({
-    grid: game.grid(),
-    currentShape: game.currentShape(),
-    upcomingShape: game.upcomingShape() || 0,
-    bag: game.bag(),
-    bagIndex: game.bagIndex(),
-    rndSeed,
-    score: game.score()
-  });
-
-  /**
-   * Loads the game state from the given state object.
-   * @param  {State} state The state to load.
-   */
-  const loadState = (state) => {
-    game.grid(clone(state.grid));
-    game.currentShape(clone(state.currentShape));
-    game.upcomingShape(clone(state.upcomingShape));
-    game.bag(clone(state.bag));
-    game.bagIndex(clone(state.bagIndex));
-    rndSeed = clone(state.rndSeed);
-    game.score(clone(state.score));
-  }
 
   const newRandomGenome = () => {
     const genome = specializedBrain.newRandomGenome();
@@ -97,6 +69,7 @@ const Brain = (config = {}) => {
     console.log("Generation " + generation + " evaluated.");
     console.log("Elite's id & fitness: #" + genomes[0].id + " - " + genomes[0].fitness);
     console.log("Average fitness: " + genomes.reduce((sum, g) => sum = sum + g.fitness, 0) / genomes.length);
+    console.log(clone(genomes));
 
     // Create new population
     let newGenomes = [];
@@ -106,19 +79,21 @@ const Brain = (config = {}) => {
     }
 
     // Keep best third and a fourth of the remaining unfit to generate next generation
-    genomes = genomes.filter((_g, i) => (i < (populationSize / 3)) || !Random.numberBetween(0, 4));
+    genomes = genomes.filter((_g, i) => (i < (populationSize / 3)) || !Random.intNumberBetween(0, 4));
 
     // Add brand new genomes for diversity
     for (let i = 0; i < genomes.length * config.ratioBrandNewGenomes; i++) {
-      const genome = specializedBrain.newRandomGenome();
+      const genome = newRandomGenome();
       newGenomes.push(genome);
     }
 
     // Fill population with mix and / or mutations of previous genomes
     while (newGenomes.length < populationSize) {
       const genome = specializedBrain.newGenome(genomes);
-      genome.id = genomeId++;
-      newGenomes.push(genome);
+      if (!genomesIncludes(genome)) {
+        genome.id = genomeId++;
+        newGenomes.push(genome);
+      }
     }
 
     // Initialize newGenomes fitness for next occurence
@@ -133,6 +108,8 @@ const Brain = (config = {}) => {
     archive.currentGeneration = generation;
     localStorage.setItem("archive", JSON.stringify(archive));
   }
+
+  const genomesIncludes = (genome) => genomes.some(g => specializedBrain.areIdenticalGenomes(g, genome));
 
   /**
    * Evaluates the next genome in the population. If there is none, evolves the population.
@@ -191,7 +168,7 @@ const Brain = (config = {}) => {
           // Set the genome algorithm
           const algorithm = {};
           let rating = 0;
-          Object.keys(evaluator).forEach(key => {
+          specializedBrain.getGenes().forEach(key => {
             const val = evaluator[key](game);
             rating += val * genomes[genomeIndex][key];
             algorithm[key] = val;

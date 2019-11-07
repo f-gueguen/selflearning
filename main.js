@@ -5,10 +5,11 @@ let evaluator = Evaluator(game);
 let view = View(game);
 let brain = Brain({ game, evaluator });
 let specializedBrain = SpecializedBrain(game, evaluator, brain.getConfig());
-const archiveName = "archive_" + Random.numberBetween(0, 5000);
+console.log(brain.getConfig());
+const archiveName = "archive_" + Random.intNumberBetween(0, 5000);
 
 // Used to help create a seeded generated random number for choosing shapes. makes results deterministic (reproducible) for debugging
-let rndSeed = Random.numberBetween(0, 1000); // 1;
+let rndSeed = Random.intNumberBetween(0, 1000); // 1;
 
 //GAME VALUES
 //for storing current state, we can load later

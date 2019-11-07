@@ -3,23 +3,24 @@
 const SpecializedBrain = (game, evaluator, config) => {
 
   const genes = [
-    'cumulativeHeight',
-    'holes',
-    'roughness',
-    'relativeHeight',
-    'height'
+     'cumulativeHeight',
+     'holes',
+     'roughness',
+     'relativeHeight',
+     'height'
   ];
+  const getGenes = () => genes;
 
-  const mutate = (genome, rate, step) =>
+  const mutate = (genome) =>
     genes.forEach(key => {
-      if (Math.random() < rate) {
-        genome[key] = genome[key] + step * (Math.random() * 2 - 1);
+      if (Math.random() < config.mutationRate) {
+        genome[key] = genome[key] + config.mutationStep * (Math.random() * 2 - 1);
       }
     });
 
   const newRandomGenome = () =>
-    Object.keys(evaluator).reduce((genome, key) => {
-      genome[key] = Math.random() - 0.5;
+    genes.reduce((genome, key) => {
+      genome[key] = Math.random() * 2 - 1;
       return genome;
     }, {});
 
@@ -28,7 +29,7 @@ const SpecializedBrain = (game, evaluator, config) => {
     if (Math.random() < config.ratioChildrenToSingle) {
       genome = makeChild(genome, Random.weightedArrayElement(genomes));
     }
-    mutate(genome, config.mutationRate, config.mutationStep);
+    mutate(genome);
     return genome;
   }
 
@@ -67,15 +68,19 @@ const SpecializedBrain = (game, evaluator, config) => {
     game.currentShape(clone(state.currentShape));
     game.upcomingShape(clone(state.upcomingShape));
     game.bag(clone(state.bag));
-    game.bagIndex(clone(state.bagIndex));
-    rndSeed = clone(state.rndSeed);
-    game.score(clone(state.score));
+    game.bagIndex(state.bagIndex);
+    rndSeed = state.rndSeed;
+    game.score(state.score);
   }
+
+  const areIdenticalGenomes = (g1, g2) => !genes.some(key => g1[key] !== g2[key]);
 
   return {
     newRandomGenome,
     newGenome,
     getState,
     loadState,
+    areIdenticalGenomes,
+    getGenes,
   }
 };
