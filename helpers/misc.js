@@ -13,11 +13,10 @@ function clone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
-//flip row x column to column x row
+// Flip row/colum to column/row
 function transpose(array) {
   return array[0].map((col, i) =>
-    array.map((row) => row[i]
-    )
+    array.map((row) => row[i])
   );
 }
 

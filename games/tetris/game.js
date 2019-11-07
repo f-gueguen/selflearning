@@ -302,11 +302,12 @@ const Game = (config = {}) => {
   // Rotate a shape
   const rotate = (matrix, times = 1) => {
     for (let t = 0; t < times; t++) {
+      // Flip rows and columns
       matrix = transpose(matrix);
-      // for the length of the matrix, reverse each column
-//      for (let i = 0; i < matrix.length; i++) {
-//        matrix[i].reverse();
-//      }
+      // Reverse each column
+      for (let i = 0; i < matrix.length; i++) {
+        matrix[i].reverse();
+      }
     }
     return matrix;
   };
