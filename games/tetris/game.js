@@ -22,7 +22,7 @@ const Game = (config = {}) => {
     return _grid;
   };
 
-  //Block shapes
+  //Block shapes (use square matrix for computation convenience)
   const shapes = {
     I: [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]],
     J: [[2, 0, 0], [2, 2, 2], [0, 0, 0]],
@@ -304,7 +304,7 @@ const Game = (config = {}) => {
     for (let t = 0; t < times; t++) {
       // Flip rows and columns
       matrix = transpose(matrix);
-      // Reverse each column
+      // Reverse each column (90 clockwise)
       for (let i = 0; i < matrix.length; i++) {
         matrix[i].reverse();
       }

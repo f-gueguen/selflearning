@@ -16,9 +16,6 @@ const Brain = (config = {}) => {
   // helps calculate mutation
   config.mutationStep = config.mutationStep || 0.1;
 
-  // Used to help create a seeded generated random number for choosing shapes. makes results deterministic (reproducible) for debugging
-  let rndSeed = config.rndSeed || Random.intNumberBetween(0, 1000); // 1;
-
   //GAME VALUES
   //stores current game state
   let roundState;
@@ -66,6 +63,7 @@ const Brain = (config = {}) => {
     archive.elites.push(clone(genomes[0]));
 
     // Log last generation data
+    generationScore.push(genomes[0].fitness);
     console.log("Generation " + generation + " evaluated.");
     console.log("Elite's id & fitness: #" + genomes[0].id + " - " + genomes[0].fitness);
     console.log("Average fitness: " + genomes.reduce((sum, g) => sum = sum + g.fitness, 0) / genomes.length);
@@ -106,7 +104,7 @@ const Brain = (config = {}) => {
     // Store this genomes set
     archive.genomes = clone(genomes);
     archive.currentGeneration = generation;
-    localStorage.setItem("archive", JSON.stringify(archive));
+    localStorage.setItem(archiveName, JSON.stringify(archive));
   }
 
   const genomesIncludes = (genome) => genomes.some(g => specializedBrain.areIdenticalGenomes(g, genome));

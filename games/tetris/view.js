@@ -53,6 +53,7 @@ const View = (game) => {
       html += "<br />Individual: " + (genomeIndex + 1) + "/" + populationSize;
       html += "<br /><pre>" + JSON.stringify(genomes[genomeIndex], null, 2) + "</pre>";
     }
+    html += generationScore.reduce((txt, score, i) => 'generation #' + i + ': ' + score + '<br />' + txt, '');
     html = replaceAll(html, ",", "&nbsp;");
     scoreDetails.innerHTML = html;
   }

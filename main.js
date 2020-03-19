@@ -1,6 +1,6 @@
 "use strict";
 
-let game = Game({ gameHeight: 15, gameWidth: 10 });
+let game = Game({ gameHeight: 12, gameWidth: 10 });
 let evaluator = Evaluator(game);
 let view = View(game);
 let brain = Brain({ game, evaluator });
@@ -21,6 +21,7 @@ let speedIndex = 0;
 const speedUp = () => speedIndex = ++speedIndex % speeds.length;
 const speedDown = () => speedIndex = (--speedIndex + speeds.length) % speeds.length;
 
+const generationScore = [];
 
 // Current move
 let movesTaken = 0;
